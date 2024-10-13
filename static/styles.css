@@ -1,0 +1,400 @@
+/* Base styling */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+    background-color: #f8f5f2;
+    color: #333;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Neumorphism effect */
+.neumorphic {
+    background: #f8f5f2;
+    border-radius: 15px;
+    box-shadow: 5px 5px 15px #c1b9b2, 
+                -5px -5px 15px #ffffff;
+    padding: 20px;
+    margin: 20px;
+}
+
+/* Header Section */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 25px;
+    background-color: #f8f5f2;
+    box-shadow: inset 5px 5px 15px #c1b9b2, inset -5px -5px 15px #ffffff;
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: #333;
+}
+
+nav {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    gap: 15px; /* Adjust gap for spacing */
+}
+
+nav ul li {
+    display: inline-block;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: #333;
+    font-size: 16px;
+    padding: 5px 15px; /* Reduced padding for a non-button look */
+    border-radius: 10px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+nav ul li a:hover {
+    background-color: #db7093;
+    padding: 5px 15px; /* Reduced padding for a non-button look */
+    border-radius: 10px;
+    color: white;
+    cursor: pointer;
+}
+
+
+/* Search Form */
+.search-form {
+    display: flex;
+    align-items: center; /* Aligns search input and button vertically */
+    gap: 10px;
+}
+
+.search-form input {
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    width: 200px;
+    box-shadow: inset 3px 3px 6px #c1b9b2, inset -3px -3px 6px #ffffff; /* Neumorphic effect */
+}
+
+.search-form button {
+    padding: 8px 12px;
+    background-color: #db7093;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: 3px 3px 6px #c1b9b2, -3px -3px 6px #ffffff; /* Neumorphic effect */
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.search-form button:hover {
+    background-color: #c65b81;
+    transform: translateY(-2px);
+}
+
+/* Hero Section */
+.hero {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 300px;
+    font-size: 36px;
+    font-weight: bold;
+    color: #fff;
+    background: linear-gradient(145deg, #db7093, #f6cedb);
+    border-radius: 20px;
+    box-shadow: 8px 8px 16px #c1b9b2, 
+                -8px -8px 16px #ffffff;
+    overflow: hidden; /* Ensure content stays inside the hero */
+}
+
+.hero-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ensures the image covers the area */
+    border-radius: inherit; /* Match the border-radius of the hero container */
+    opacity: 0.3; /* Optional: adjust opacity to blend with text */
+    z-index: 0;
+}
+
+.hero h1 {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+}
+
+/* Categories Section */
+.categories, .best-sellers {
+    padding: 20px;
+}
+
+.categories h2, .best-sellers h2 {
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #db7093;
+}
+
+.category-grid, .product-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Creates 3 equal columns */
+    gap: 20px; /* Spacing between items */
+    justify-items: center; /* Centers the content within each grid item */
+}
+
+/* Category and Product Neumorphic Cards */
+.category-item, .product-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%; /* Adjust width as needed */
+    max-width: 300px; /* Set a maximum width for the product item */
+    padding: 15px; /* Adjust padding */
+    background-color: #f8f5f2;
+    border-radius: 15px;
+    box-shadow: 5px 5px 15px #c1b9b2, -5px -5px 15px #ffffff;
+    transition: transform 0.3s ease;
+    margin: 10px 0; /* Adjust vertical spacing between items */
+    text-align: center; /* Center text for product details */
+}
+
+.category-item img, .product-item img {
+    max-width: 100%; /* Ensure image fits within the container */
+    height: auto;
+    margin-top: 15px; /* Adds space between the product details and the image */
+    border-radius: 10px;
+}
+
+.category-item:hover, .product-item:hover {
+    transform: translateY(-5px);
+    background-color: #f6cedb;
+}
+
+/* Footer Section */
+footer {
+    text-align: center;
+    padding: 15px;
+    background-color: #f8f5f2;
+    box-shadow: inset 5px 5px 15px #c1b9b2, inset -5px -5px 15px #ffffff;
+    margin-top: auto;
+    color: #db7093;
+}
+
+@media (max-width: 768px) {
+    .category-grid, .product-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .category-grid, .product-grid {
+        grid-template-columns: 1fr;
+    }
+
+    nav ul {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+.btn {
+    padding: 10px 20px;
+    border-radius: 10px;
+    background: #f8f5f2;
+    box-shadow: 5px 5px 15px #c1b9b2, -5px -5px 15px #ffffff;
+    color: #333;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn:hover {
+    transform: translateY(-3px);
+    background-color: #db7093;
+    color: #fff;
+}
+
+.category-item img {
+    width: 100%;
+    height: auto;
+    border-radius: 15px; /* Match the card's border-radius */
+    box-shadow: 5px 5px 15px #c1b9b2, -5px -5px 15px #ffffff; /* Neumorphic shadow */
+    transition: transform 0.3s ease;
+}
+
+.category-item:hover img {
+    transform: translateY(-5px);
+}
+
+/* Contact Section */
+.contact {
+    padding: 40px;
+}
+
+.contact h2 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #db7093;
+}
+
+.contact-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 30px;
+}
+
+/* Contact Form Styling */
+.contact-form, .contact-details {
+    flex: 1;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 5px 5px 15px #c1b9b2, -5px -5px 15px #ffffff;
+}
+
+.contact-form form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.contact-form label {
+    font-size: 16px;
+    color: #333;
+}
+
+.contact-form input, .contact-form textarea {
+    padding: 10px;
+    font-size: 14px;
+    border: none;
+    border-radius: 10px;
+    box-shadow: inset 3px 3px 6px #c1b9b2, inset -3px -3px 6px #ffffff;
+}
+
+.contact-form button {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #db7093;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 3px 3px 6px #c1b9b2, -3px -3px 6px #ffffff;
+    transition: transform 0.3s ease;
+}
+
+.contact-form button:hover {
+    transform: translateY(-3px);
+}
+
+/* Contact Details Styling */
+.contact-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.contact-details div {
+    padding: 15px;
+    background-color: #f8f5f2;
+    border-radius: 15px;
+    box-shadow: 5px 5px 15px #c1b9b2, -5px -5px 15px #ffffff;
+}
+
+/* Add Product Form Styles */
+.add-product {
+    max-width: 500px; /* Maximum width for the form */
+    margin: 40px auto; /* Center the form */
+    padding: 30px; /* Internal padding */
+    background: #ffffff; /* White background for the form */
+    border-radius: 12px; /* Rounded corners */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Soft shadow */
+    transition: box-shadow 0.3s; /* Smooth shadow transition */
+}
+
+.add-product:hover {
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2); /* Slightly darker shadow on hover */
+}
+
+.add-product h2 {
+    text-align: center; /* Center the heading */
+    color: #db7093; /* Pink color for the header */
+    margin-bottom: 20px; /* Space below heading */
+}
+
+.add-product label {
+    display: block; /* Each label on a new line */
+    margin-bottom: 5px; /* Space below each label */
+    font-weight: 600; /* Bold labels */
+    color: #555; /* Light grey for labels */
+}
+
+.add-product input[type="text"],
+.add-product input[type="number"],
+.add-product input[type="file"] {
+    width: 100%; /* Full width for inputs */
+    padding: 12px; /* Spacing inside inputs */
+    margin-bottom: 20px; /* Space below each input */
+    border: 1px solid #ddd; /* Light border */
+    border-radius: 8px; /* Rounded corners */
+    font-size: 16px; /* Font size for inputs */
+    background-color: #fff; /* Input background remains white */
+    transition: border-color 0.3s, box-shadow 0.3s; /* Smooth transition */
+}
+
+.add-product input[type="text"]:focus,
+.add-product input[type="number"]:focus {
+    border-color: #db7093; /* Pink border on focus */
+    box-shadow: 0 0 5px rgba(219, 112, 147, 0.5); /* Light pink shadow on focus */
+    outline: none; /* Remove default outline */
+}
+
+.add-product button {
+    width: 100%; /* Full width for the button */
+    padding: 12px; /* Spacing inside button */
+    background: #db7093; /* Pink background for the button */
+    color: white; /* White text */
+    border: none; /* No border */
+    border-radius: 8px; /* Rounded corners for the button */
+    font-size: 16px; /* Button font size */
+    cursor: pointer; /* Pointer cursor for buttons */
+    transition: background-color 0.3s, transform 0.3s; /* Smooth transitions */
+}
+
+.add-product button:hover {
+    background-color: #c95a8e; /* Darker pink on hover */
+    transform: translateY(-2px); /* Slight lift effect */
+}
+
+.add-product button:active {
+    transform: translateY(0); /* Reset lift effect on click */
+}
+
+/* Responsive Styles */
+@media (max-width: 600px) {
+    .add-product {
+        padding: 20px; /* Adjust padding for smaller screens */
+    }
+
+    .add-product input[type="text"],
+    .add-product input[type="number"],
+    .add-product input[type="file"],
+    .add-product button {
+        font-size: 14px; /* Adjust font size for smaller screens */
+    }
+}

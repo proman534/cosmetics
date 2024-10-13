@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Shop - Cosmetics Website{% endblock %}
+
+{% block content %}
+<section class="shop-section">
+    <h2>Shop Our Products</h2>
+    <div class="product-grid">
+        {% for product in products %}
+        <div class="product-item neumorphic">
+            <img src="{{ url_for('static', filename='images/' ~ product.image) }}" alt="{{ product.name }}" />
+            <h3>{{ product.name }}</h3>
+            <p>₹{{ product.price }}</p>
+            <a href="{{ url_for('add_to_cart', product_id=product.id) }}" class="button" aria-label="Add {{ product.name }} to cart" >Add to Cart</a>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

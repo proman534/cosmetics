@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}"> <!-- Adjust to your stylesheet path -->
+    <title>User Details</title>
+</head>
+<body>
+    <!-- Header Section -->
+    <header>
+        <div class="logo">LOGO</div>
+        <nav>
+            <ul>
+                <li><form action="{{ url_for('search') }}" method="POST" class="search-form">
+                    <input type="text" name="query" placeholder="Search products..." required>
+                    <button type="submit">Search</button>
+                </form></li>
+                <li><a href="{{ url_for('home') }}">Home</a></li>
+                <li><a href="{{ url_for('shop') }}">Shop</a></li>
+                <li><a href="{{ url_for('categories') }}">Categories</a></li>
+                <li><a href="{{ url_for('contact') }}">Contact</a></li>
+                <li><a href="{{ url_for('cart') }}">Cart ({{ cart_count }})</a></li>
+                {% if user %}
+                    <li><a href="{{ url_for('profile') }}">Hello, {{ user }}</a></li>
+                    <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('login') }}">Login</a></li>
+                    <li><a href="{{ url_for('signup') }}">Signup</a></li>
+                {% endif %}
+            </ul>
+        </nav>        
+    </header>
+
+    <div class="container">
+        <h1 class="text-center">Enter Your Details</h1>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="alert-container">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        <form method="POST" action="{{ url_for('place_order') }}" class="user-details-form">
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone:</label>
+                <input type="text" id="phone" name="phone" class="form-control" required>
+            </div>
+            <div class="form-group text-center">
+                <button type="submit" class="btn btn-primary">Place Order</button>
+            </div>
+        </form>
+        
+        <div class="text-center">
+            <a href="{{ url_for('cart') }}" class="btn btn-secondary">Back to Cart</a>
+        </div>
+    </div>
+    
+</body>
+</html>

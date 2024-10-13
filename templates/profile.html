@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - Cosmetics Website{% endblock %}
+
+{% block content %}
+<section class="profile-section">
+    <h2>Your Profile</h2>
+    <p>Welcome to your profile page, {{ user }}!</p>
+    <!-- You can add more profile-related information here -->
+    <a href="{{ url_for('logout') }}">Logout</a>
+</section>
+{% endblock %}
