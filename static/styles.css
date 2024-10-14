@@ -110,17 +110,16 @@ nav ul li a:hover {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 300px;
-    font-size: 36px;
-    font-weight: bold;
-    color: #fff;
+    height: 300px; /* Adjust this value for responsiveness */
     background: linear-gradient(145deg, #db7093, #f6cedb);
     border-radius: 20px;
     box-shadow: 8px 8px 16px #c1b9b2, 
                 -8px -8px 16px #ffffff;
     overflow: hidden; /* Ensure content stays inside the hero */
+    position: relative; /* Allow absolute positioning of child elements */
 }
 
+/* Background Image */
 .hero-image {
     position: absolute;
     top: 0;
@@ -129,15 +128,44 @@ nav ul li a:hover {
     height: 100%;
     object-fit: cover; /* Ensures the image covers the area */
     border-radius: inherit; /* Match the border-radius of the hero container */
-    opacity: 0.3; /* Optional: adjust opacity to blend with text */
+    opacity: 0.8; /* Optional: adjust opacity to blend with text */
     z-index: 0;
 }
 
+/* Hero Text */
 .hero h1 {
     position: relative;
-    z-index: 1;
+    z-index: 1; /* Ensures the text appears above the image */
     text-align: center;
+    font-size: 36px; /* Font size for larger screens */
+    font-weight: bold;
+    color: #db7093; /* Text color to contrast against the image */
+    text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8); /* Optional: adds a subtle shadow for better contrast */
+    background: none; /* Ensure no background color */
+    padding: 0; /* Ensure no padding that could create a box effect */
+    margin: 0; /* Ensure no margin that could create a box effect */
 }
+
+/* Responsive Font Size */
+@media (max-width: 768px) {
+    .hero {
+        height: 200px; /* Adjust height for smaller screens */
+    }
+    .hero h1 {
+        font-size: 28px; /* Smaller font size for smaller screens */
+    }
+}
+
+@media (max-width: 480px) {
+    .hero {
+        height: 150px; /* Further adjust height for mobile */
+    }
+
+    .hero h1 {
+        font-size: 24px; /* Even smaller font size */
+    }
+}
+
 
 /* Categories Section */
 .categories, .best-sellers {

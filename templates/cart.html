@@ -5,6 +5,140 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cosmetics Website - Cart</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        /* Neumorphic Cart Styles */
+        .cart-container {
+            max-width: 80%;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+            border-radius: 15px;
+            box-shadow: 8px 8px 16px #d9d9d9, -8px -8px 16px #ffffff;
+        }
+
+        .neumorphic {
+            background: #f5f5f5;
+            border-radius: 12px;
+            box-shadow: inset 8px 8px 16px #d9d9d9, inset -8px -8px 16px #ffffff;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        h2, h3 {
+            text-align: center;
+            color: #db7093;
+            margin-bottom: 20px;
+        }
+
+        /* Table Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: center;  /* Center text for better alignment */
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #db7093;
+            color: white;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        td {
+            vertical-align: middle; /* Align content vertically in the middle */
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9; /* Light background for even rows */
+        }
+
+        tr:hover {
+            background-color: #ffe6f2; /* Highlight effect on row hover */
+        }
+
+        /* Item Image Styling */
+        .item-info {
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Center the item info in the cell */
+            gap: 15px;
+        }
+
+        .item-info img {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        input[type="number"] {
+            width: 60px;
+            padding: 5px;
+            border: 1px solid #db7093;
+            border-radius: 5px;
+            margin-right: 10px;
+            text-align: center; /* Center text in number input */
+        }
+
+        /* Styling for Buttons */
+        .button, .update-btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #db7093;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+        }
+
+        .button:hover, .update-btn:hover {
+            background-color: #ff91ac;
+        }
+
+        .button:active, .update-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Update Button in Quantity Form */
+        .update-btn {
+            border: none;
+            cursor: pointer;
+            margin-left: 5px;
+        }
+
+        .cart-summary p {
+            font-size: 1.2rem;
+            text-align: center;
+        }
+
+        .cart-summary .button {
+            display: block;
+            width: 50%;
+            margin: 10px auto 0;
+            text-align: center;
+        }
+
+        footer {
+            text-align: center;
+            padding: 15px 0;
+            background-color: #db7093;
+            color: white;
+            position: fixed;
+            width: 100%;
+            bottom: 0;
+        }
+
+    </style>
 </head>
 <body>
 
@@ -13,10 +147,12 @@
         <div class="logo">LOGO</div>
         <nav>
             <ul>
-                <li><form action="{{ url_for('search') }}" method="POST" class="search-form">
-                    <input type="text" name="query" placeholder="Search products..." required>
-                    <button type="submit">Search</button>
-                </form></li>
+                <li>
+                    <form action="{{ url_for('search') }}" method="POST" class="search-form">
+                        <input type="text" name="query" placeholder="Search products..." required>
+                        <button type="submit">Search</button>
+                    </form>
+                </li>
                 <li><a href="{{ url_for('home') }}">Home</a></li>
                 <li><a href="{{ url_for('shop') }}">Shop</a></li>
                 <li><a href="{{ url_for('categories') }}">Categories</a></li>
@@ -34,28 +170,39 @@
     </header>
 
     <!-- Cart Section -->
-    <section class="cart">
-        <h2>Your Cart</h2>
+    <section class="cart" aria-labelledby="cart-heading">
+        <h2 id="cart-heading">Your Cart</h2>
         <div class="cart-container">
             {% if cart_items %}
                 <div class="cart-items neumorphic">
                     <table>
                         <thead>
                             <tr>
+                                <th>Image</th>
                                 <th>Item</th>
                                 <th>Price</th>
                                 <th>Quantity</th>
                                 <th>Total</th>
-                                <th>Actions</th>
+                                <th>Actions</th>  <!-- New Column -->
                             </tr>
                         </thead>
                         <tbody>
                             {% for item in cart_items %}
                             <tr>
-                                <td>{{ item.name }}</td>
-                                <td> ₹{{ item.price }}</td>
-                                <td>{{ item.quantity }}</td>
-                                <td> ₹{{ item.total }}</td>
+                                <td>
+                                    <div class="item-info">
+                                        <img src="{{ url_for('static', filename='images/' + item.image) }}" alt="{{ item.name }}">
+                                    </div>
+                                </td>
+                                <td>{{  item.name  }}</td>
+                                <td>₹{{ item.price }}</td>
+                                <td>
+                                    <form action="{{ url_for('update_cart', item_id=item.id) }}" method="POST">
+                                        <input type="number" name="quantity" value="{{ item.quantity }}" min="1" required>
+                                        <button type="submit" class="update-btn">Update</button>
+                                    </form>                                  
+                                </td>
+                                <td>₹{{ item.total }}</td>
                                 <td>
                                     <a href="{{ url_for('remove_from_cart', item_id=item.id) }}" class="button">Remove</a>
                                 </td>
@@ -64,14 +211,17 @@
                         </tbody>
                     </table>
                 </div>
+
                 <div class="cart-summary neumorphic">
                     <h3>Summary</h3>
                     <p><strong>Total Amount:</strong> ₹{{ total_amount }}</p>
                     <a href="{{ url_for('checkout') }}" class="button">Checkout</a>
                 </div>
             {% else %}
-                <p>Your cart is empty.</p>
-                <a href="{{ url_for('home') }}">Continue Shopping</a>
+                <div class="neumorphic">
+                    <p style="font-size: 30px;">Your cart is empty 😞.</p>
+                    <a href="{{ url_for('home') }}" class="button" style="margin-top: 10px;">Continue Shopping</a>
+                </div>
             {% endif %}
         </div>
     </section>

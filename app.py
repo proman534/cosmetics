@@ -11,7 +11,7 @@ import random
 import uuid
 import string
 from dotenv import load_dotenv
-from functools import wraps
+
 
 
 # Load environment variables
@@ -25,15 +25,6 @@ app.config['UPLOAD_FOLDER'] = 'static/images'
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
-
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user' not in session:
-            flash('Please log in to access this page.', 'warning')
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
 
 def clear_cart():
     user_id = session.get('user_id')
@@ -80,6 +71,7 @@ class CartItem(db.Model):
     total = db.Column(db.Float, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)  # Optional for logged-in users
     session_id = db.Column(db.String(100), nullable=True)  # Used for guest users
+    image = db.Column(db.String(200), nullable=False)  # Add image field
 
     def __repr__(self):
         return f'<CartItem {self.name}>'
@@ -208,7 +200,8 @@ def add_to_cart(product_id):
                 quantity=1,
                 total=product.price,
                 user_id=user_id,  # Set user_id if logged in
-                session_id=session_id if not user_id else None  # Set session_id if not logged in
+                session_id=session_id if not user_id else None,  # Set session_id if not logged in
+                image=product.image
             )
             db.session.add(cart_item)
 
@@ -276,16 +269,10 @@ def login():
 
 # Route for Admin Page
 @app.route('/admin')
-@login_required
 def admin():
     # Optionally, you could add a check to ensure only logged-in users can access this page
     products= Product.query.all()
-    user = session.get('user')
-    if user.get('user_type') != 'admin':
-        flash('You do not have permission to access this page.', 'danger')
-        return redirect(url_for('home'))
-
-
+    
     return render_template('admin.html',  products=products)
 
 
@@ -355,16 +342,24 @@ def submit_contact():
 @app.route('/search', methods=['GET', 'POST'])
 def search():
     user = session.get('user')
-    
-    # Handle category search via GET request
-    query = request.args.get('query')
+    products = []  # Initialize products to an empty list
+    found = False   # Flag to check if any products are found
+
+    # Handle search via POST request
+    if request.method == 'POST':
+        query = request.form.get('query')  # Get the query from POST data
+    else:
+        # Handle category search via GET request
+        query = request.args.get('query')
+
     if query:
         products = Product.query.filter(
             or_(Product.name.ilike(f'%{query}%'), Product.category.ilike(f'%{query}%'))
         ).all()
-        return render_with_cart('shop.html', products=products, user=user)
+        found = len(products) > 0  # Set flag based on whether products were found
 
-    return render_with_cart('shop.html', user=user)
+    return render_with_cart('shop.html', products=products, user=user, found=found)
+
 
 
 @app.route('/place_order', methods=['GET', 'POST'])
@@ -461,6 +456,40 @@ def checkout():
     user = session.get('user')
     return render_template('checkout.html', cart_items=cart_items, total_amount=total_amount, user=user)
 
+@app.route('/update_cart/<int:item_id>', methods=['POST'])
+def update_cart(item_id):
+    """Update the quantity of a cart item."""
+    try:
+        # Retrieve new quantity from the form input
+        new_quantity = int(request.form['quantity'])
+        if new_quantity < 1:
+            flash('Quantity must be at least 1.', 'warning')
+            return redirect(url_for('cart'))
+
+        # Determine if the user is logged in or using session-based cart
+        user_id = session.get('user_id')
+        session_id = get_session_id()
+
+        # Query the cart item by ID and user/session association
+        cart_item = CartItem.query.filter_by(id=item_id).filter(
+            (CartItem.user_id == user_id) | (CartItem.session_id == session_id)
+        ).first()
+
+        if cart_item:
+            # Update quantity and total price
+            cart_item.quantity = new_quantity
+            cart_item.total = cart_item.price * new_quantity
+
+            db.session.commit()
+            flash('Cart updated successfully!', 'success')
+        else:
+            flash('Cart item not found.', 'danger')
+
+    except ValueError:
+        flash('Invalid quantity. Please enter a valid number.', 'danger')
+
+    # Redirect back to the cart page
+    return redirect(url_for('cart'))
 
 
 # Run the application
