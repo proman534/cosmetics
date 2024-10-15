@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Success</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        .container {
+            max-width: 600px;
+            margin: 50px auto;
+            background-color: #fff;
+            padding: 20px 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            margin: 10px;
+            background-color: #db7093;
+            color: #fff;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Section -->
+    <header>
+        <div class="logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Cosmetics Logo" style="height: 50px;"> <!-- Replace with your logo image URL -->
+        </div>
+        <nav>
+            <ul>
+                <li><form action="{{ url_for('search') }}" method="POST" class="search-form">
+                    <input type="text" name="query" placeholder="Search products..." required>
+                    <button type="submit">Search</button>
+                </form></li>
+                <li><a href="{{ url_for('home') }}">Home</a></li>
+                <li><a href="{{ url_for('shop') }}">Shop</a></li>
+                <li><a href="{{ url_for('categories') }}">Categories</a></li>
+                <li><a href="{{ url_for('contact') }}">Contact</a></li>
+                <li><a href="{{ url_for('cart') }}">Cart ({{ cart_count }})</a></li>
+                {% if user %}
+                    <li><a href="{{ url_for('profile') }}">Hello, {{ user }}</a></li>
+                    <li><a href="{{ url_for('logout') }}">Logout</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('login') }}">Login</a></li>
+                    <li><a href="{{ url_for('signup') }}">Signup</a></li>
+                {% endif %}
+            </ul>
+        </nav>        
+    </header>
+
+
+    <div class="container text-center">
+        <h1>Thank You for Your Order!</h1>
+        <p>Your order <strong>#{{ order_number }}</strong> has been placed successfully.</p>
+        <a href="{{ url_for('home') }}" class="btn btn-primary">Continue Shopping</a>
+    </div>
+
+    <!-- Footer Section -->
+    <footer>
+        <p>© 2024 Cosmetics Website | Terms | Privacy | Contact</p>
+    </footer>
+</body>
+</html>

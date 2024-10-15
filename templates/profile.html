@@ -4,9 +4,21 @@
 
 {% block content %}
 <section class="profile-section">
-    <h2>Your Profile</h2>
-    <p>Welcome to your profile page, {{ user }}!</p>
-    <!-- You can add more profile-related information here -->
-    <a href="{{ url_for('logout') }}">Logout</a>
+    <div class="profile-container">
+        <h2>Your Profile</h2>
+        <p>Welcome to your profile page, <strong>{{ user_d.username }}</strong>!</p>
+
+        <div class="profile-user-details">
+            <p><strong>Username:</strong> {{ user_d.username }}</p>
+            <p><strong>Email:</strong> {{ user_d.email }}</p>
+            <p><strong>Phone:</strong> {{ user_d.phone }}</p>
+            <p><strong>User Type:</strong> {{ user_d.user_type }}</p>
+        </div>
+
+        <div class="profile-options">
+            <a href="{{ url_for('orders') }}" class="btn btn-primary">View Orders</a>
+            <a href="{{ url_for('logout') }}" class="btn btn-secondary">Logout</a>
+        </div>
+    </div>
 </section>
 {% endblock %}

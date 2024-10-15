@@ -10,6 +10,7 @@ import os
 import random
 import uuid
 import string
+import re
 from dotenv import load_dotenv
 
 
@@ -101,7 +102,6 @@ class Order(db.Model):
         self.delivery_date = delivery_date
 
 # Utility function to get cart item count
-# Utility function to get cart item count
 def get_cart_item_count():
     user_id = session.get('user_id')  # Get user_id from the session
     session_id = get_session_id()  # Get session ID
@@ -135,7 +135,26 @@ def home():
 @app.route('/profile')
 def profile():
     user = session.get('user')
-    return render_with_cart('profile.html', user=user)
+    user_d = User.query.get(session.get('user_id'))
+    return render_with_cart('profile.html', user=user,  user_d=user_d)
+
+
+@app.route('/orders')
+def orders():
+    user = session.get('user')
+    user_id = session.get('user_id')  # Retrieve the current user's ID from the session
+    
+    if not user_id:
+        flash('You need to be logged in to view your orders.', 'danger')
+        return redirect(url_for('login'))
+    
+    # Query the orders belonging to the logged-in user
+    user_orders = Order.query.filter_by(user_id=user_id).order_by(Order.placed_at.desc()).all()
+
+    if not user_orders:
+        flash('You have no orders yet.', 'info')
+
+    return render_with_cart('orders.html', orders=user_orders, user=user)
 
 # Route for adding a product
 @app.route('/add-product', methods=['GET', 'POST'])
@@ -338,6 +357,11 @@ def submit_contact():
     flash('Your message has been sent successfully!', 'success')
     return redirect(url_for('contact'))
 
+
+# Route for Search
+from sqlalchemy import or_
+import re
+
 # Route for Search
 @app.route('/search', methods=['GET', 'POST'])
 def search():
@@ -347,18 +371,30 @@ def search():
 
     # Handle search via POST request
     if request.method == 'POST':
-        query = request.form.get('query')  # Get the query from POST data
+        query = request.form.get('query', '').strip()  # Get the query and strip whitespace, default to empty string
     else:
         # Handle category search via GET request
-        query = request.args.get('query')
+        query = request.args.get('query', '').strip()  # Default to empty string
+
+    # Normalize spaces: replace multiple spaces with a single space
+    query = re.sub(r'\s+', ' ', query)
 
     if query:
-        products = Product.query.filter(
-            or_(Product.name.ilike(f'%{query}%'), Product.category.ilike(f'%{query}%'))
-        ).all()
+        # Split the query into individual words
+        search_terms = query.split(' ')
+        
+        # Create a search filter for each term
+        filters = [or_(
+            Product.name.ilike(f'%{term}%'),
+            Product.category.ilike(f'%{term}%')
+        ) for term in search_terms]
+
+        # Combine filters with OR logic
+        products = Product.query.filter(or_(*filters)).all()
         found = len(products) > 0  # Set flag based on whether products were found
 
     return render_with_cart('shop.html', products=products, user=user, found=found)
+
 
 
 
@@ -426,7 +462,50 @@ def place_order():
                 flash('An error occurred while placing your order. Please try again.', 'danger')
 
     # Render a form for the user to fill in details if not logged in
-    return render_template('user_details.html')  # Create this template for user details input
+    return render_with_cart('user_details.html')  # Create this template for user details input
+
+@app.route('/order_confirmation', methods=['GET', 'POST'])
+def order_confirmation():
+    user_id = session.get('user_id')  # Ensure user is logged in
+    if not user_id:
+        flash("Please log in to continue.", "danger")
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        # Fetch address and payment details from the form
+        address = request.form.get('address')
+        payment_method = request.form.get('payment_method')
+
+        if not address or not payment_method:
+            flash("Please provide all required details.", "danger")
+            return redirect(url_for('order_confirmation'))
+
+        # Fetch the user's latest order (assuming it was just created)
+        order = Order.query.filter_by(user_id=user_id).order_by(Order.id.desc()).first()
+
+        if order:
+            # Update order with address and payment method
+            order.address = address
+            order.payment_method = payment_method
+
+            try:
+                db.session.commit()  # Save the updated order
+                clear_cart()  # Empty the cart after order confirmation
+                flash("Order placed successfully!", "success")
+                return redirect(url_for('order_success', order_number=order.order_number))
+            except IntegrityError:
+                db.session.rollback()
+                flash("An error occurred while confirming your order. Please try again.", "danger")
+        else:
+            flash("No active order found. Please try again.", "danger")
+            return redirect(url_for('cart'))
+
+    return render_with_cart('order_confirmation.html')
+
+@app.route('/order_success/<order_number>')
+def order_success(order_number):
+    return render_with_cart('order_success.html', order_number=order_number)
+
 
 # Function to generate order number
 def generate_order_number():
@@ -454,7 +533,7 @@ def checkout():
     cart_items = CartItem.query.all()
     total_amount = sum(item.total for item in cart_items)
     user = session.get('user')
-    return render_template('checkout.html', cart_items=cart_items, total_amount=total_amount, user=user)
+    return render_with_cart('checkout.html', cart_items=cart_items, total_amount=total_amount, user=user)
 
 @app.route('/update_cart/<int:item_id>', methods=['POST'])
 def update_cart(item_id):

@@ -13,10 +13,12 @@
         <div class="logo">LOGO</div>
         <nav>
             <ul>
-                <li><form action="{{ url_for('search') }}" method="POST" class="search-form">
-                    <input type="text" name="query" placeholder="Search products..." required>
-                    <button type="submit">Search</button>
-                </form></li>
+                <li>
+                    <form action="{{ url_for('search') }}" method="POST" class="search-form">
+                        <input type="text" name="query" placeholder="Search products..." required>
+                        <button type="submit">Search</button>
+                    </form>
+                </li>
                 <li><a href="{{ url_for('home') }}">Home</a></li>
                 <li><a href="{{ url_for('shop') }}">Shop</a></li>
                 <li><a href="{{ url_for('categories') }}">Categories</a></li>
@@ -37,23 +39,29 @@
     <section class="categories">
         <h2>Explore Categories</h2>
         <div class="category-grid">
-            <a href="/search?category=skincare" class="category-item">
+            <a href="{{ url_for('search') }}?query=skincare" class="category-item">
                 <img src="{{ url_for('static', filename='images/skincare.jpg') }}" alt="Skincare">
+                <span>Skincare</span>
             </a>
-            <a href="/search?category=makeup" class="category-item">
+            <a href="{{ url_for('search') }}?query=makeup" class="category-item">
                 <img src="{{ url_for('static', filename='images/makeup.jpg') }}" alt="Makeup">
+                <span>Makeup</span>
             </a>
-            <a href="/search?category=haircare" class="category-item">
+            <a href="{{ url_for('search') }}?query=haircare" class="category-item">
                 <img src="{{ url_for('static', filename='images/haircare.jpg') }}" alt="Hair Care">
+                <span>Hair Care</span>
             </a>
-            <a href="/search?category=fragrances" class="category-item">
+            <a href="{{ url_for('search') }}?query=fragrances" class="category-item">
                 <img src="{{ url_for('static', filename='images/fragrances.jpg') }}" alt="Fragrances">
+                <span>Fragrances</span>
             </a>
-            <a href="/search?category=bodycare" class="category-item">
+            <a href="{{ url_for('search') }}?query=bodycare" class="category-item">
                 <img src="{{ url_for('static', filename='images/bodycare.jpg') }}" alt="Body Care">
+                <span>Body Care</span>
             </a>
-            <a href="/search?category=tools" class="category-item">
+            <a href="{{ url_for('search') }}?query=tools" class="category-item">
                 <img src="{{ url_for('static', filename='images/tools.jpg') }}" alt="Tools & Brushes">
+                <span>Tools & Brushes</span>
             </a>
         </div>
         
@@ -68,12 +76,12 @@
                 <img src="{{ url_for('static', filename='images/' ~ product.image) }}" alt="{{ product.name }}">
                 <span>{{ product.name }}</span>
                 <span>${{ product.price }}</span>
-                <a href="{{ url_for('add_to_cart', product_id=product.id) }}" class="button" aria-label="Add {{ product.name }} to cart" >Add to Cart</a>
+                <a href="{{ url_for('add_to_cart', product_id=product.id) }}" class="button" aria-label="Add {{ product.name }} to cart">Add to Cart</a>
             </div>
             {% endfor %}
         </div>
     </section>
-</section>
+
     <!-- Footer Section -->
     <footer>
         <p>© 2024 Cosmetics Website | Terms | Privacy | Contact</p>

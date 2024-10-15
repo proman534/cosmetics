@@ -207,12 +207,30 @@ nav ul li a:hover {
     height: auto;
     margin-top: 15px; /* Adds space between the product details and the image */
     border-radius: 10px;
+    display: block;
 }
 
 .category-item:hover, .product-item:hover {
     transform: translateY(-5px);
     background-color: #f6cedb;
 }
+
+/* Styles for category item span */
+.category-item span {
+    display: block; /* Makes the span take full width */
+    text-align: center; /* Center aligns the text */
+    margin-top: 10px; /* Adds space between the image and the text */
+    font-size: 16px; /* Adjusts font size */
+    color: #db7093; /* Sets the text color to match the brand color */
+    font-weight: bold; /* Makes the text bold */
+    transition: color 0.3s; /* Adds a transition effect for hover */
+}
+
+/* Hover effect for category item span */
+.category-item:hover span {
+    color: #c76385; /* Changes color on hover */
+}
+
 
 /* Footer Section */
 footer {
@@ -343,6 +361,86 @@ footer {
     border-radius: 15px;
     box-shadow: 5px 5px 15px #c1b9b2, -5px -5px 15px #ffffff;
 }
+
+/* User Details */
+.profile-user-details {
+    text-align: left;
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.profile-user-details p {
+    margin: 10px 0;
+    font-size: 16px;
+}
+
+/* Profile Section */
+.profile-section {
+    padding: 50px 0;
+    background: linear-gradient(145deg, #f6cedb, #fff);
+}
+
+.profile-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+    text-align: center;
+}
+
+.profile-section h2 {
+    color: #db7093;
+    margin-bottom: 20px;
+}
+
+.profile-section p {
+    font-size: 18px;
+    margin-bottom: 30px;
+}
+
+/* Profile Buttons */
+.profile-options {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.profile-section .btn {
+    display: inline-block;
+    padding: 12px 24px;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 16px;
+    transition: background-color 0.3s;
+    cursor: pointer;
+}
+
+.profile-section .btn-primary {
+    background-color: #db7093;
+    color: white;
+    border: none;
+}
+
+.profile-section .btn-secondary {
+    background-color: #db7093;
+    color: white;
+    border: none;
+}
+
+.profile-section .btn-secondary:hover {
+    background-color: #c76385;
+}
+
+.profile-section .btn-primary:hover {
+    background-color: #c76385;
+}
+
 
 /* Add Product Form Styles */
 .add-product {
