@@ -137,10 +137,10 @@ nav ul li a:hover {
     position: relative;
     z-index: 1; /* Ensures the text appears above the image */
     text-align: center;
-    font-size: 36px; /* Font size for larger screens */
+    font-size: 38px; /* Font size for larger screens */
     font-weight: bold;
-    color: #db7093; /* Text color to contrast against the image */
-    text-shadow: 2px 2px 4px rgba(255, 255, 255, 0.8); /* Optional: adds a subtle shadow for better contrast */
+    color: #ffffff; /* Text color to contrast against the image */
+    text-shadow: 2px 2px 4px #000000; /* Optional: adds a subtle shadow for better contrast */
     background: none; /* Ensure no background color */
     padding: 0; /* Ensure no padding that could create a box effect */
     margin: 0; /* Ensure no margin that could create a box effect */
