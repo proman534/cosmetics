@@ -51,6 +51,7 @@ CREATE TABLE `cart_item` (
   `price` float NOT NULL,
   `quantity` int DEFAULT '1',
   `total` float NOT NULL,
+  `image` varchar(200) DEFAULT NULL,
   `user_id` int unsigned DEFAULT NULL,
   `session_id` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`id`),
@@ -58,7 +59,7 @@ CREATE TABLE `cart_item` (
   KEY `fk_user` (`user_id`),
   CONSTRAINT `fk_product` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -115,7 +116,7 @@ CREATE TABLE `orders` (
   UNIQUE KEY `order_number` (`order_number`),
   KEY `orders_ibfk_1` (`user_id`),
   CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -124,7 +125,7 @@ CREATE TABLE `orders` (
 
 LOCK TABLES `orders` WRITE;
 /*!40000 ALTER TABLE `orders` DISABLE KEYS */;
-INSERT INTO `orders` VALUES (1,'WY6W0CXW',5,19773,'2024-10-11 11:48:34','2024-10-06 06:18:34');
+INSERT INTO `orders` VALUES (1,'WY6W0CXW',5,19773,'2024-10-11 11:48:34','2024-10-06 06:18:34'),(2,'GV7B2JAD',5,898,'2024-10-20 11:20:44','2024-10-15 05:50:44'),(3,'IL7DTTP4',7,898,'2024-10-20 12:12:39','2024-10-15 06:42:39'),(4,'JSAXI4NN',8,898,'2024-10-20 12:41:36','2024-10-15 07:11:36'),(5,'94NMJIEI',8,1225,'2024-10-20 12:43:16','2024-10-15 07:13:16');
 /*!40000 ALTER TABLE `orders` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -153,7 +154,7 @@ CREATE TABLE `product` (
 
 LOCK TABLES `product` WRITE;
 /*!40000 ALTER TABLE `product` DISABLE KEYS */;
-INSERT INTO `product` VALUES (1,'cream','a cream applied to face',1225,'makeup\n',5,'face-cream.jpeg'),(2,'shampoo','TRESemmé Keratin Smooth Shampoo helps your hair restore its keratin leaving them visibly straight and smoother. Infused with light-weight Argan Oil, this professional shampoo nourishes each strand of your hair making them silky smooth and easier to manage. This unique combination of Keratin and Argan Oil conditions and strengthens your hair and provides them hydration and elasticity. With its dual-action, TRESemmé Keratin Smooth Shampoo helps you get up to 100% smoother hair with more shine.',898,'Haircare',10,'shampoo.jpg'),(3,'soap','Be 100% sure to protect your skin from 100 illness-causing germs and bacteria. Dettol\'s Intense Cool Protection bathing soap bar keeps your skin.',177,'bodycare',17,'soap.jpeg'),(4,'dove soap','Shop for Dove Shea Butter Beauty Cream Moisturizing Bar Soap with Vanilla Scent online at Ubuy. Get the best deals and offers on Ubuy, a India.',5584,'bodycare',14,'dove_soap.jpeg');
+INSERT INTO `product` VALUES (1,'cream','a cream applied to face',1225,'makeup\n',20,'face-cream.jpeg'),(2,'shampoo','TRESemmé Keratin Smooth Shampoo helps your hair restore its keratin leaving them visibly straight and smoother. Infused with light-weight Argan Oil, this professional shampoo nourishes each strand of your hair making them silky smooth and easier to manage. This unique combination of Keratin and Argan Oil conditions and strengthens your hair and provides them hydration and elasticity. With its dual-action, TRESemmé Keratin Smooth Shampoo helps you get up to 100% smoother hair with more shine.',898,'Haircare',20,'shampoo.jpg'),(3,'soap','Be 100% sure to protect your skin from 100 illness-causing germs and bacteria. Dettol\'s Intense Cool Protection bathing soap bar keeps your skin.',177,'bodycare',20,'soap.jpeg'),(4,'dove soap','Shop for Dove Shea Butter Beauty Cream Moisturizing Bar Soap with Vanilla Scent online at Ubuy. Get the best deals and offers on Ubuy, a India.',5584,'bodycare',20,'dove_soap.jpeg');
 /*!40000 ALTER TABLE `product` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -173,7 +174,7 @@ CREATE TABLE `user` (
   `user_type` varchar(150) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `username` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -182,7 +183,7 @@ CREATE TABLE `user` (
 
 LOCK TABLES `user` WRITE;
 /*!40000 ALTER TABLE `user` DISABLE KEYS */;
-INSERT INTO `user` VALUES (1,'admin','scrypt:32768:8:1$xh7SLm4bTn2sPY8N$a8da9327ef35ab42dd24abb888db1978ae2b72c1ea146ac9de81b692b6150c327189232664c31898d4764c7d5c2c437168f72a7eda8a27d8658e41930fcf5fc4','admin@gmail.com','9392584801','admin'),(3,'shyam','scrypt:32768:8:1$XfGIMkBl3PZprw5z$2b6770b0e7d6ac7ebbab036eb76eef2c0a1b2539036080fbdcb076a11293b23061847e0c6a12cfdf257c5d6981d237926aa1b58fe6b8dd990e96ac6e61f7ab7c','shyam@gmail.com','9392584801','user'),(5,'nithin','scrypt:32768:8:1$ImaYkCDhsF7FGRl1$03622beae070846c2644aae57361bfe6e0743a1fe14c124b61cf9d5dcef85e289529e51545c64dfee9a26c6c0afc9f5bf0c0d95485fa6efb0d730958a08b8638','shyamkoushikp@gmail.com','9392584801','user'),(7,'mani','scrypt:32768:8:1$TXwMXz8tkhZ9QA8i$7b522ca49cc0022b68157d0100309e479a2c939d35e39a4ad6ae04b62b90014651faa50b4f713581b75a31b78c05f140bcae13f7e665698a4b88547b2c998cdf','mani@gmail.com','mani','user');
+INSERT INTO `user` VALUES (1,'admin','scrypt:32768:8:1$xh7SLm4bTn2sPY8N$a8da9327ef35ab42dd24abb888db1978ae2b72c1ea146ac9de81b692b6150c327189232664c31898d4764c7d5c2c437168f72a7eda8a27d8658e41930fcf5fc4','admin@gmail.com','9392584801','admin'),(3,'shyam','scrypt:32768:8:1$XfGIMkBl3PZprw5z$2b6770b0e7d6ac7ebbab036eb76eef2c0a1b2539036080fbdcb076a11293b23061847e0c6a12cfdf257c5d6981d237926aa1b58fe6b8dd990e96ac6e61f7ab7c','shyam@gmail.com','9392584801','user'),(5,'nithin','scrypt:32768:8:1$ImaYkCDhsF7FGRl1$03622beae070846c2644aae57361bfe6e0743a1fe14c124b61cf9d5dcef85e289529e51545c64dfee9a26c6c0afc9f5bf0c0d95485fa6efb0d730958a08b8638','shyamkoushikp@gmail.com','9392584801','user'),(7,'mani','scrypt:32768:8:1$TXwMXz8tkhZ9QA8i$7b522ca49cc0022b68157d0100309e479a2c939d35e39a4ad6ae04b62b90014651faa50b4f713581b75a31b78c05f140bcae13f7e665698a4b88547b2c998cdf','mani@gmail.com','mani','user'),(8,'aasd','scrypt:32768:8:1$B2gevardFv6MefzS$82f712424a2f3e614b9d1fbba085e7abf420359a290f128e2d06c11ebc55253308005d883dfe9d677a7a5a79d75aef63342b479f1feffeb3451ee21e81af8d6e','n1613922@student.narayanagroup.com','9392584801','guest');
 /*!40000 ALTER TABLE `user` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -195,4 +196,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-10-13 15:21:09
+-- Dump completed on 2024-10-15 16:45:29
