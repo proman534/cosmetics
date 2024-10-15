@@ -159,6 +159,8 @@ def orders():
 # Route for adding a product
 @app.route('/add-product', methods=['GET', 'POST'])
 def add_product():
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
     if request.method == 'POST':
         name = request.form['name']
         description = request.form['description']
@@ -289,7 +291,8 @@ def login():
 # Route for Admin Page
 @app.route('/admin')
 def admin():
-    # Optionally, you could add a check to ensure only logged-in users can access this page
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
     products= Product.query.all()
     
     return render_template('admin.html',  products=products)

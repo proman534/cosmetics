@@ -3,15 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Cosmetics Website{% endblock %}</title>
+    <title>{% block title %}My Cosmetics Store{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
-
     <!-- Header Section -->
     <header>
-        <div class="logo">LOGO</div>
+        <div class="logo">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Cosmetics Logo" style="height: 50px;">
+        </div>
         <nav>
             <ul>
                 <li>
@@ -36,15 +36,14 @@
         </nav>
     </header>
 
-    <!-- Dynamic Content -->
-    <div class="content">
-        {% block content %}{% endblock %}
-    </div>
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
 
     <!-- Footer Section -->
     <footer>
         <p>© 2024 Cosmetics Website | Terms | Privacy | Contact</p>
     </footer>
-
 </body>
 </html>
