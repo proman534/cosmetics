@@ -187,7 +187,7 @@ nav ul li a:focus,
     bottom: 0;
     left: 0;
     width: 100%;
-    height: 85%;
+    height: 100%;
     object-fit: fill; /* Ensures the image covers the area */
     /* Match the border-radius of the hero container */
     opacity: 0.8; /* Optional: adjust opacity to blend with text */

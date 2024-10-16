@@ -232,8 +232,7 @@ def add_to_cart(product_id):
         flash('Item added to cart!', 'success')
     else:
         flash('Product out of stock!', 'danger')
-
-    return redirect(url_for('cart'))
+    return redirect(request.referrer or url_for('shop'))
 
 
 
