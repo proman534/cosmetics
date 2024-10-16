@@ -159,7 +159,7 @@ def orders():
 # Route for adding a product
 @app.route('/add-product', methods=['GET', 'POST'])
 def add_product():
-    if 'user_id' not in session:
+    if 'user_id' != "1":
         return redirect(url_for('login'))
     if request.method == 'POST':
         name = request.form['name']
@@ -291,7 +291,7 @@ def login():
 # Route for Admin Page
 @app.route('/admin')
 def admin():
-    if 'user_id' not in session:
+    if 'user_id' != "1":
         return redirect(url_for('login'))
     products= Product.query.all()
     
