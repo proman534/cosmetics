@@ -159,7 +159,7 @@ def orders():
 # Route for adding a product
 @app.route('/add-product', methods=['GET', 'POST'])
 def add_product():
-    if 'user_id' != "1":
+    if session.get('user_type') != "admin":
         return redirect(url_for('login'))
     if request.method == 'POST':
         name = request.form['name']
@@ -275,6 +275,7 @@ def login():
         if user and check_password_hash(user.password, password):
             session['user'] = user.username
             session['user_id'] = user.id
+            session['user_type'] = user.user_type
 
             # Check if the user is an admin
             if user.user_type ==  'admin':
@@ -290,7 +291,7 @@ def login():
 # Route for Admin Page
 @app.route('/admin')
 def admin():
-    if 'user_id' != "1":
+    if session.get('user_type') != "admin":
         return redirect(url_for('login'))
     products= Product.query.all()
     

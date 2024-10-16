@@ -33,19 +33,4 @@
             </a>
         </div>
     </section>
-
-    <!-- Best Sellers Section -->
-    <section class="best-sellers">
-        <h2>Best Sellers</h2>
-        <div class="product-grid">
-            {% for product in products %}
-            <div class="product-item">
-                <img src="{{ url_for('static', filename='images/' ~ product.image) }}" alt="{{ product.name }}">
-                <span>{{ product.name }}</span>
-                <span>${{ product.price }}</span>
-                <a href="{{ url_for('add_to_cart', product_id=product.id) }}" class="button" aria-label="Add {{ product.name }} to cart">Add to Cart</a>
-            </div>
-            {% endfor %}
-        </div>
-    </section>
 {% endblock %}
