@@ -103,8 +103,37 @@ nav ul li a:focus,
     animation: fadeIn 0.5s ease-in;
 }
 
+/* span*/
+.name{
+    display: block; 
+    font-weight: bold; 
+    font-size: 20px; 
+    margin: 10px 0; 
+    color: #333;
+    text-transform: capitalize;
+}
 
+.price {
+    display: block; 
+    font-size: 18px; 
+    color: #db7093; 
+    font-weight: bold; 
+    margin-bottom: 15px;
+}
 
+.add_to_cart{
+    display: inline-block; 
+    background-color: #db7093; 
+    color: white; 
+    padding: 12px 30px; 
+    text-decoration: none; 
+    border-radius: 25px; 
+    font-weight: bold; 
+    text-align: center; 
+    cursor: pointer; 
+    transition: background-color 0.3s ease;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
 
 /* Search Form */
 .search-form {

@@ -3,14 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}My Cosmetics Store{% endblock %}</title>
+    <title>{% block title %}SALOON CAPILLUS{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+    <style>
+        /* Floating Cart Button Styling */
+        .floating-cart {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #db7093;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            text-decoration: none;
+        }
+
+        .floating-cart:hover {
+            background-color: #c06083;
+        }
+
+        .cart-counter {
+            background-color: white;
+            color: #db7093;
+            border-radius: 50%;
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+    </style>
 </head>
 <body>
+
     <!-- Header Section -->
     <header>
         <div class="logo">
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Cosmetics Logo" style="height: 50px;">
+            <img src="{{ url_for('static', filename='images/logo1.png') }}" alt="Cosmetics Logo" style="height: 50px;">
         </div>
         <nav>
             <ul>
@@ -36,14 +76,22 @@
         </nav>
     </header>
 
-    <main>
-        {% block content %}
-        {% endblock %}
-    </main>
+
+    <!-- Main Content Section -->
+    <section class="main-content">
+        {% block content %}{% endblock %}
+    </section>
+
+    <!-- Floating Cart Button -->
+    <a href="{{ url_for('cart') }}" class="floating-cart">
+        Cart 
+        <div class="cart-counter">{{ cart_count }}</div>
+    </a>
 
     <!-- Footer Section -->
     <footer>
         <p>© 2024 Cosmetics Website | Terms | Privacy | Contact</p>
     </footer>
+
 </body>
 </html>

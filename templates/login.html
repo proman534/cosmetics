@@ -6,23 +6,51 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login Register form</title>
 
-    <!--Boxicons CDN-->
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' 
-    rel='stylesheet'>
+    <!-- Boxicons CDN -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 
-    <!--Custom CSS-->
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">
 
+    <style>
+        /* Additional styling to position logo and title side by side */
+        .logo-title-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* Optional: adjust spacing as needed */
+            margin-bottom: 20px; /* Space between logo/title and the form */
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo img {
+            height: 60px;
+            margin-right: 10px; /* Space between logo and title */
+        }
+
+        .title {
+            font-size: 24px; /* Adjust as needed */
+            color: #333; /* Customize text color */
+            margin-right: 150px;
+        }
+    </style>
 </head>
 
 <body>
-    <!-- FOR SOURCE CODE COMMENT "CODE" -->
 
     <div class="wrapper">
         <span class="rotate-bg"></span>
 
         <div class="form-box login">
-            <h2 class="title animation" style="--i:0; --j:21">Login</h2>
+            <div class="logo-title-container">
+                <div class="logo">
+                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Cosmetics Logo">
+                </div>
+                <h2 class="title animation" style="--i:0; --j:21">Login</h2>
+            </div>
             <form action="{{ url_for('login') }}" method="POST">
 
                 <div class="input-box animation" style="--i:1; --j:22">
@@ -44,11 +72,11 @@
         </div>
 
         <div class="info-text login">
-            <h2 class="animation" style="--i:0; --j:20">Welcome Back!</h2>
-            <p class="animation" style="--i:1; --j:21">Lorem ipsum dolor sit amet consectetur adipisicing elit.
-                Deleniti,rem?</p>
+            <h2 class="animation" style="--i:0; --j:20">Welcome to Saloon Capillus</h2>
+            <p class="animation" style="--i:1; --j:21">Your ultimate destination for all things beauty!</p>
         </div>
 
-</div>
+    </div>
 </body>
+
 </html>

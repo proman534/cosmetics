@@ -1,13 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Checkout</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <style>
-        
+{% extends 'base.html' %}
 
+{% block title %}Checkout{% endblock %}
+
+{% block content %}
+    <style>
         main {
             width: 80%;
             margin: 20px auto;
@@ -43,11 +39,9 @@
             background-color: #f1f1f1;
         }
 
-        /* Item Image Styling */
         .item-info {
             display: flex;
             align-items: center;
-            justify-content: left; /* Center the item info in the cell */
             gap: 15px;
         }
 
@@ -88,31 +82,6 @@
             margin-top: 30px;
         }
     </style>
-</head>
-<body>
-    <header>
-        <div class="logo">LOGO</div>
-        <nav>
-            <ul>
-                <li><form action="{{ url_for('search') }}" method="POST" class="search-form">
-                    <input type="text" name="query" placeholder="Search products..." required>
-                    <button type="submit">Search</button>
-                </form></li>
-                <li><a href="{{ url_for('home') }}">Home</a></li>
-                <li><a href="{{ url_for('shop') }}">Shop</a></li>
-                <li><a href="{{ url_for('categories') }}">Categories</a></li>
-                <li><a href="{{ url_for('contact') }}">Contact</a></li>
-                <li><a href="{{ url_for('cart') }}">Cart ({{ cart_count }})</a></li>
-                {% if user %}
-                    <li><a href="{{ url_for('profile') }}">Hello, {{ user }}</a></li>
-                    <li><a href="{{ url_for('logout') }}">Logout</a></li>
-                {% else %}
-                    <li><a href="{{ url_for('login') }}">Login</a></li>
-                    <li><a href="{{ url_for('signup') }}">Signup</a></li>
-                {% endif %}
-            </ul>
-        </nav>
-    </header>
 
     <main>
         <h1>Checkout</h1>
@@ -132,7 +101,8 @@
                     <tr>
                         <td>
                             <div class="item-info">
-                                <img src="{{ url_for('static', filename='images/' + item.image) }}" alt="{{ item.name }}">
+                                <img src="{{ url_for('static', filename='images/' + item.image) }}" 
+                                     alt="{{ item.name }}">
                             </div>
                         </td>
                         <td>{{ item.name }}</td>
@@ -152,5 +122,4 @@
             <p class="empty-cart">Your cart is empty. Please add products to your cart.</p>
         {% endif %}
     </main>
-</body>
-</html>
+{% endblock %}

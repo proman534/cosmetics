@@ -1,25 +1,30 @@
-{% extends "base.html" %}
+{% extends 'base.html' %}
 
-{% block title %}Shop - Cosmetics Website{% endblock %}
+{% block title %}Saloon Capillus{% endblock %}
 
 {% block content %}
-<section class="shop-section">
-    <h2>Shop Our Products</h2>
-
-    <!-- Check if products were found -->
-    {% if products %}
+    <section class="best-sellers">
+        <h2>Products</h2>
         <div class="product-grid">
             {% for product in products %}
-            <div class="product-item neumorphic">
-                <img src="{{ url_for('static', filename='images/' ~ product.image) }}" alt="{{ product.name }}" />
-                <h3>{{ product.name }}</h3>
-                <p>₹{{ product.price }}</p>
-                <a href="{{ url_for('add_to_cart', product_id=product.id) }}" class="button" aria-label="Add {{ product.name }} to cart">Add to Cart</a>
+            <div class="product-item" style="text-align: center; margin-bottom: 20px;">
+                <img src="{{ url_for('static', filename='images/' ~ product.image) }}" 
+                     alt="{{ product.name }}" style="width: 100%; max-width: 250px; height: auto; border-radius: 8px;">
+                
+                <span class="name">
+                    {{ product.name }}
+                </span>
+
+                <span class="price">
+                    ₹{{ product.price }}
+                </span>
+
+                <a href="{{ url_for('add_to_cart', product_id=product.id) }}" 
+                   class="add_to_cart">
+                    Add to Cart
+                </a>
             </div>
             {% endfor %}
         </div>
-    {% else %}
-        <p>No products found for your search query. Please try again!</p>
-    {% endif %}
-</section>
+    </section>
 {% endblock %}
