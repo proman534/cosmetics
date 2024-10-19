@@ -86,6 +86,21 @@ class Contact(db.Model):
     message = db.Column(db.Text, nullable=False)
     timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
 
+# OrderItem Model
+class OrderItem(db.Model):
+    __tablename__ = 'order_item'
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('orders.id'), nullable=False)  # Foreign key to Order
+    product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
+    product_name = db.Column(db.String(100), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    total = db.Column(db.Float, nullable=False)
+
+    def __repr__(self):
+        return f'<OrderItem {self.product_name}>'
+
+# Update to Order Model to reflect relationship
 class Order(db.Model):
     __tablename__ = 'orders'
     id = db.Column(db.Integer, primary_key=True)
@@ -95,11 +110,14 @@ class Order(db.Model):
     delivery_date = db.Column(db.DateTime, nullable=False)
     placed_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
+    order_items = db.relationship('OrderItem', backref='order', lazy=True)
+
     def __init__(self, order_number, user_id, total_amount, delivery_date):
         self.order_number = order_number
         self.user_id = user_id
         self.total_amount = total_amount
         self.delivery_date = delivery_date
+
 
 # Utility function to get cart item count
 def get_cart_item_count():
@@ -138,23 +156,6 @@ def profile():
     user_d = User.query.get(session.get('user_id'))
     return render_with_cart('profile.html', user=user,  user_d=user_d)
 
-
-@app.route('/orders')
-def orders():
-    user = session.get('user')
-    user_id = session.get('user_id')  # Retrieve the current user's ID from the session
-    
-    if not user_id:
-        flash('You need to be logged in to view your orders.', 'danger')
-        return redirect(url_for('login'))
-    
-    # Query the orders belonging to the logged-in user
-    user_orders = Order.query.filter_by(user_id=user_id).order_by(Order.placed_at.desc()).all()
-
-    if not user_orders:
-        flash('You have no orders yet.', 'info')
-
-    return render_with_cart('orders.html', orders=user_orders, user=user)
 
 # Route for adding a product
 @app.route('/add-product', methods=['GET', 'POST'])
@@ -404,72 +405,58 @@ def search():
 @app.route('/place_order', methods=['GET', 'POST'])
 def place_order():
     if request.method == 'POST':
-        # Check if user is logged in
         user_id = session.get('user_id')
+        session_id = get_session_id()
 
         if user_id:
-            # If logged in, use their details
-            total_amount = sum(item.total for item in CartItem.query.all())  # Calculate total from cart
-            delivery_date = datetime.now() + timedelta(days=5)  # Example delivery date
-            order_number = generate_unique_order_number()  # Function to generate order number
-            
-            new_order = Order(order_number=order_number, user_id=user_id, total_amount=total_amount, delivery_date=delivery_date)
-            try:
-                db.session.add(new_order)
-                db.session.commit()
-                flash('Order placed successfully!', 'success')
-                return redirect(url_for('order_confirmation'))
-
-            except IntegrityError:
-                db.session.rollback()
-                flash('An error occurred while placing your order. Please try again.', 'danger')
-
+            # Retrieve cart items for logged-in user
+            cart_items = CartItem.query.filter_by(user_id=user_id).all()
         else:
-            # If not logged in, get user details from the form
-            name = request.form.get('name')
-            email = request.form.get('email')
-            phone = request.form.get('phone')
+            # Retrieve cart items for guest user
+            cart_items = CartItem.query.filter_by(session_id=session_id).all()
 
-            # Validate user details
-            if not name or not email or not phone:
-                flash('Please provide all required details.', 'danger')
-                return redirect(url_for('place_order'))
+        if not cart_items:
+            flash('Your cart is empty.', 'info')
+            return redirect(url_for('cart'))
 
-            # Create a new user or get existing user (optional)
-            existing_user = User.query.filter_by(email=email).first()
-            if existing_user:
-                user_id = existing_user.id  # Use existing user ID
-            else:
-                # Create a new user if they don't exist
-                hashed_password = generate_password_hash('default_password')  # Use a default or prompt user for password
-                new_user = User(username=name, password=hashed_password, email=email, phone=phone, user_type='guest')
-                db.session.add(new_user)
-                db.session.commit()
-                user_id = new_user.id  # Get new user's ID
+        total_amount = sum(item.total for item in cart_items)
+        delivery_date = datetime.now() + timedelta(days=5)
+        order_number = generate_unique_order_number()
 
-            # Create the order
-            total_amount = sum(item.total for item in CartItem.query.all())
-            delivery_date = datetime.now() + timedelta(days=5)
-            order_number = generate_order_number()
+        # Create a new Order
+        new_order = Order(order_number=order_number, user_id=user_id, total_amount=total_amount, delivery_date=delivery_date)
 
-            new_order = Order(order_number=order_number, user_id=user_id, total_amount=total_amount, delivery_date=delivery_date)
-            try:
-                db.session.add(new_order)
-                db.session.commit()
-                flash('Order placed successfully!', 'success')
-                clear_cart()
-                return redirect(url_for('order_confirmation'))
+        try:
+            db.session.add(new_order)
+            db.session.flush()  # Flush to get the order ID for order items
 
-            except IntegrityError:
-                db.session.rollback()
-                flash('An error occurred while placing your order. Please try again.', 'danger')
+            # Create OrderItems for each CartItem
+            for cart_item in cart_items:
+                order_item = OrderItem(
+                    order_id=new_order.id,
+                    product_id=cart_item.product_id,
+                    product_name=cart_item.name,
+                    quantity=cart_item.quantity,
+                    price=cart_item.price,
+                    total=cart_item.total
+                )
+                db.session.add(order_item)
 
-    # Render a form for the user to fill in details if not logged in
-    return render_with_cart('user_details.html')  # Create this template for user details input
+            db.session.commit()  # Commit all changes
+            clear_cart()  # Clear the cart after placing the order
+            flash('Order placed successfully!', 'success')
+            return redirect(url_for('order_confirmation'))
+
+        except IntegrityError:
+            db.session.rollback()
+            flash('An error occurred while placing your order. Please try again.', 'danger')
+
+    return render_with_cart('user_details.html')
 
 @app.route('/order_confirmation', methods=['GET', 'POST'])
 def order_confirmation():
     user_id = session.get('user_id')  # Ensure user is logged in
+    order = Order.query.filter_by(user_id=user_id).order_by(Order.id.desc()).first()
     if not user_id:
         flash("Please log in to continue.", "danger")
         return redirect(url_for('login'))
@@ -503,7 +490,7 @@ def order_confirmation():
             flash("No active order found. Please try again.", "danger")
             return redirect(url_for('cart'))
 
-    return render_with_cart('order_confirmation.html')
+    return render_with_cart('order_confirmation.html', order=order)
 
 @app.route('/order_success/<order_number>')
 def order_success(order_number):
@@ -533,7 +520,15 @@ def categories():
 
 @app.route('/checkout')
 def checkout():
-    cart_items = CartItem.query.all()
+    user = session.get('user')
+    user_id = session.get('user_id')
+    session_id = get_session_id()
+    if user_id:
+        # Retrieve cart items for logged-in user
+        cart_items = CartItem.query.filter_by(user_id=user_id).all()
+    else:
+        # Retrieve cart items for guest user
+        cart_items = CartItem.query.filter_by(session_id=session_id).all()
     total_amount = sum(item.total for item in cart_items)
     user = session.get('user')
     return render_with_cart('checkout.html', cart_items=cart_items, total_amount=total_amount, user=user)
@@ -572,6 +567,23 @@ def update_cart(item_id):
 
     # Redirect back to the cart page
     return redirect(url_for('cart'))
+
+@app.route('/orders')
+def orders():
+    if 'user_id' not in session:
+        flash('Please log in to view your orders.', 'danger')
+        return redirect(url_for('login'))
+
+    user_id = session['user_id']
+    
+    # Fetch all orders placed by the user, along with the related items
+    orders = Order.query.filter_by(user_id=user_id).all()
+
+    # Verify if orders contain related items
+    for order in orders:
+        order.items = OrderItem.query.filter_by(order_id=order.id).all()
+
+    return render_template('orders.html', orders=orders)
 
 
 # Run the application
