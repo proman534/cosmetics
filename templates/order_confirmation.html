@@ -1,192 +1,94 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Order Confirmation</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    <style>
-        /* General Styles */
-        .container {
-            max-width: 600px;
-            margin: 50px auto;
-            background-color: #fff;
-            padding: 20px 30px;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
+{% extends "base.html" %}
 
-        /* Header */
-        h1.text-center {
-            text-align: center;
-            margin-bottom: 20px;
-            color: #db7093;
-            font-size: 28px;
-        }
+{% block content %}
+<div class="order-confirmation-container">
+    <h1 class="order-confirmation-header">Order Confirmation</h1>
 
-        /* Form Styles */
-        .order-confirmation-form .form-group {
-            margin-bottom: 15px;
-        }
-
-        .order-confirmation-form label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #555;
-        }
-
-        .order-confirmation-form textarea,
-        .order-confirmation-form select {
-            width: 100%;
-            padding: 10px;
-            font-size: 16px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            resize: vertical;
-        }
-
-        textarea:focus,
-        select:focus {
-            outline: none;
-            border-color: #db7093;
-            box-shadow: 0 0 5px rgba(219, 112, 147, 0.5);
-        }
-
-        /* Buttons */
-        .btn {
-            display: inline-block;
-            padding: 10px 20px;
-            font-size: 16px;
-            border-radius: 5px;
-            text-decoration: none;
-            cursor: pointer;
-            transition: background-color 0.3s ease, color 0.3s ease;
-            margin: 5px;
-        }
-
-        .btn-primary {
-            background-color: #db7093;
-            color: #fff;
-            border: none;
-        }
-
-        .btn-secondary {
-            background-color: #6c757d;
-            color: #fff;
-            border: none;
-        }
-
-        .btn-primary:hover {
-            background-color: #c0637d;
-        }
-
-        .btn-secondary:hover {
-            background-color: #5a6268;
-        }
-
-        /* Alerts */
-        .alert-container {
-            margin-bottom: 20px;
-        }
-
-        .alert {
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            font-weight: bold;
-        }
-
-        .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-        }
-
-        .alert-danger {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-
-        /* Centering Elements */
-        .text-center {
-            text-align: center;
-        }
-
-    </style>
-</head>
-<body>
-
-    <!-- Header Section -->
-    <header>
-        <div class="logo">
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Cosmetics Logo" style="height: 50px;"> <!-- Replace with your logo image URL -->
-        </div>
-        <nav>
-            <ul>
-                <li><form action="{{ url_for('search') }}" method="POST" class="search-form">
-                    <input type="text" name="query" placeholder="Search products..." required>
-                    <button type="submit">Search</button>
-                </form></li>
-                <li><a href="{{ url_for('home') }}">Home</a></li>
-                <li><a href="{{ url_for('shop') }}">Shop</a></li>
-                <li><a href="{{ url_for('categories') }}">Categories</a></li>
-                <li><a href="{{ url_for('contact') }}">Contact</a></li>
-                <li><a href="{{ url_for('cart') }}">Cart ({{ cart_count }})</a></li>
-                {% if user %}
-                    <li><a href="{{ url_for('profile') }}">Hello, {{ user }}</a></li>
-                    <li><a href="{{ url_for('logout') }}">Logout</a></li>
-                {% else %}
-                    <li><a href="{{ url_for('login') }}">Login</a></li>
-                    <li><a href="{{ url_for('signup') }}">Signup</a></li>
-                {% endif %}
-            </ul>
-        </nav>        
-    </header>
-
-
-    <div class="container">
-        <h1 class="text-center">Order Confirmation</h1>
-
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-            {% set category, message = messages[-1] %}
-                <div class="alert-container">
-                    {% for category, message in messages %}
-                        <div class="alert alert-{{ category }}">{{ message }}</div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
-
-        <form method="POST" action="{{ url_for('order_confirmation') }}" class="order-confirmation-form">
-            <div class="form-group">
-                <label for="address">Delivery Address:</label>
-                <textarea id="address" name="address" class="form-control" rows="4" required></textarea>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="order-alert-container">
+                {% for category, message in messages %}
+                    <div class="order-alert order-alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
             </div>
+        {% endif %}
+    {% endwith %}
 
+    <form method="POST" action="{{ url_for('order_confirmation') }}" class="order-confirmation-form">
+        <h3>Select an Existing Address</h3>
+        {% if addresses %}
             <div class="form-group">
-                <label for="payment_method">Payment Method:</label>
-                <select id="payment_method" name="payment_method" class="form-control" required>
-                    <option value="credit_card">Credit Card</option>
-                    <option value="debit_card">Debit Card</option>
-                    <option value="upi">UPI</option>
-                    <option value="cod">Cash on Delivery</option>
+                <label for="address_id">Delivery Address:</label>
+                <select id="address_id" name="address_id" class="form-control" required>
+                    <option value="">Select an existing address</option>
+                    {% for address in addresses %}
+                        <option value="{{ address.id }}">
+                            {{ address.address_line }}, {{ address.city }}, {{ address.state }} - {{ address.postal_code }} ({{ address.address_type }})
+                        </option>
+                    {% endfor %}
                 </select>
             </div>
+        {% else %}
+            <p>No addresses found. Please add a new one.</p>
+        {% endif %}
 
-            <div class="form-group text-center">
-                <button type="submit" class="btn btn-primary">Place Order</button>
-            </div>
-        </form>
-
-        <div class="text-center">
-            <a href="{{ url_for('cart') }}" class="btn btn-secondary">Back to Cart</a>
+        <h3>Or Add a New Address</h3>
+        <div class="form-group">
+            <input type="checkbox" id="add_new_address" name="add_new_address" value="true"> 
+            <label for="add_new_address">Add a new address</label>
         </div>
-    </div>
-<!-- Footer Section -->
-<footer>
-    <p>© 2024 Cosmetics Website | Terms | Privacy | Contact</p>
-</footer>
+        <div id="new_address_fields" style="display: none;">
+            <div class="form-group">
+                <label for="new_address_line">Address Line:</label>
+                <input type="text" id="new_address_line" name="new_address_line" class="form-control" placeholder="Address Line" required>
+            </div>
+            <div class="form-group">
+                <label for="new_city">City:</label>
+                <input type="text" id="new_city" name="new_city" class="form-control" placeholder="City" required>
+            </div>
+            <div class="form-group">
+                <label for="new_state">State:</label>
+                <input type="text" id="new_state" name="new_state" class="form-control" placeholder="State" required>
+            </div>
+            <div class="form-group">
+                <label for="new_postal_code">Postal Code:</label>
+                <input type="text" id="new_postal_code" name="new_postal_code" class="form-control" placeholder="Postal Code" required>
+            </div>
+            <div class="form-group">
+                <label for="new_country">Country:</label>
+                <input type="text" id="new_country" name="new_country" class="form-control" placeholder="Country" required>
+            </div>
+        </div>
 
-</body>
-</html>
+        <div class="form-group">
+            <label for="payment_method">Payment Method:</label>
+            <select id="payment_method" name="payment_method" class="form-control" required>
+                <option value="credit_card">Credit Card</option>
+                <option value="debit_card">Debit Card</option>
+                <option value="upi">UPI</option>
+                <option value="cod">Cash on Delivery</option>
+            </select>
+        </div>
+
+        <div class="form-group order-text-center">
+            <button type="submit" class="order-btn order-btn-primary">Place Order</button>
+        </div>
+    </form>
+
+    <div class="order-text-center">
+        <a href="{{ url_for('cart') }}" class="order-btn order-btn-secondary">Back to Cart</a>
+    </div>
+</div>
+
+<script>
+    // JavaScript to show/hide new address fields based on checkbox
+    document.getElementById('add_new_address').addEventListener('change', function() {
+        const newAddressFields = document.getElementById('new_address_fields');
+        if (this.checked) {
+            newAddressFields.style.display = 'block';
+        } else {
+            newAddressFields.style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}

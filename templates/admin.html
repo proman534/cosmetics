@@ -1,58 +1,32 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cosmetics Website - Neumorphism</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-</head>
-<body>
+<!-- admin.html -->
+{% extends 'admin_base.html' %}
 
-    <!-- Header Section -->
-    <header>
-        <div class="logo">
-            <img src="{{ url_for('static', filename='images/logo1.png') }}" alt="Cosmetics Logo" style="height: 50px;">
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <img src="{{ url_for('static', filename='images/hero-banner.jpg') }}" alt="Hero Banner" class="hero-image">
+</section>
+
+<section class="shop-section">
+    <h2>Shop Our Products</h2>
+    <div class="product-grid">
+        {% for product in products %}
+        <div class="product-item">
+            <img src="{{ url_for('static', filename='images/' ~ product.image) }}" alt="{{ product.name }}">
+            <span class="name">
+                {{ product.name }}
+            </span>
+
+            <span class="price">
+                ₹{{ product.price }}
+            </span>
+
+            <a href="{{ url_for('add_to_cart', product_id=product.id) }}" class="add_to_cart">
+                Add to Cart
+            </a>
         </div>
-        <nav>
-            <ul>
-                <li><a href="{{ url_for('add_product') }}">Add Product</a></li>
-                <li><a href="{{ url_for('admin')}}">Hello Admin!</a></li>
-                <li><a href="{{ url_for('logout') }}">Logout</a></li>
-            </ul>
-        </nav>        
-    </header>
-
-    <!-- Hero Section -->
-    <section class="hero">
-        <img src="{{ url_for('static', filename='images/hero-banner.jpg') }}" alt="Hero Banner" class="hero-image">
-    </section>
-    <section class="shop-section">
-        <h2>Shop Our Products</h2>
-        <div class="product-grid">
-            {% for product in products %}
-            <div class="product-item">
-                <img src="{{ url_for('static', filename='images/' ~ product.image) }}" alt="{{ product.name }}">
-                <span class="name">
-                    {{ product.name }}
-                </span>
-
-                <span class="price">
-                    ₹{{ product.price }}
-                </span>
-
-                <a href="{{ url_for('add_to_cart', product_id=product.id) }}" 
-                   class="add_to_cart">
-                    Add to Cart
-                </a>
-            </div>
-            {% endfor %}
-        </div>
-    </section>
-
-    <!-- Footer Section -->
-    <footer>
-        <p>© 2024 Cosmetics Website | Terms | Privacy | Contact</p>
-    </footer>
-
-</body>
-</html>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,45 @@
+<!-- admin_orders.html -->
+{% extends 'admin_base.html' %}
+
+{% block title %}Admin - Orders{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>Order Management</h1>
+
+    {% if orders %}
+        <table class="order-table">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>User</th>
+                    <th>Total Amount</th>
+                    <th>Placed At</th>
+                    <th>Delivery Date</th>
+                    <th>Items</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td>{{ order.order_number }}</td>
+                    <td>{{ order.user.username }} ({{ order.user.email }})</td>
+                    <td>₹{{ order.total_amount }}</td>
+                    <td>{{ order.placed_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td>{{ order.delivery_date.strftime('%Y-%m-%d') }}</td>
+                    <td>
+                        <ul>
+                            {% for item in order.order_items %}
+                                <li>{{ item.product_name }} - Qty: {{ item.quantity }} - ₹{{ item.total }}</li>
+                            {% endfor %}
+                        </ul>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>No orders found.</p>
+    {% endif %}
+</div>
+{% endblock %}

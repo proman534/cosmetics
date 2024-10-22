@@ -262,6 +262,7 @@ nav ul li a:focus,
     transition: transform 0.3s ease;
     margin: 10px 0; /* Adjust vertical spacing between items */
     text-align: center; /* Center text for product details */
+    text-decoration: none;
 }
 
 .category-item img, .product-item img {
@@ -585,4 +586,264 @@ footer {
     .add-product button {
         font-size: 14px; /* Adjust font size for smaller screens */
     }
+}
+
+/* Orders Page Container */
+.orders-container {
+    max-width: 900px;
+    margin: 50px auto;
+    padding: 30px;
+    border-radius: 10px;
+    background-color: #ffffff;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Orders Title */
+.orders-container h1 {
+    text-align: center;
+    color: #db7093;
+    margin-bottom: 30px;
+}
+
+/* Orders Table Styling */
+.order-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+}
+
+.order-table th, .order-table td {
+    padding: 15px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.order-table thead th {
+    background-color: #db7093;
+    color: white;
+    font-weight: bold;
+    text-align: center;
+}
+
+.order-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.order-table .order-items ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.order-table .order-items li {
+    padding: 5px 0;
+}
+
+/* Back to Home Button */
+.text-center .button {
+    background-color: #db7093;
+    color: white;
+    padding: 10px 20px;
+    border:none;
+    border-radius: 20px;
+    margin-left: 40%;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    text-align: center;
+}
+
+.text-center .button:hover {
+    background-color: #c06083;
+}
+
+/* admin_order page  */
+.admin-orders-container {
+    max-width: 1200px;
+    margin: 50px auto;
+    padding: 30px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+.admin-order-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+}
+
+.admin-order-table th, .admin-order-table td {
+    padding: 15px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.admin-order-table thead th {
+    background-color: #db7093;
+    color: white;
+    font-weight: bold;
+    text-align: center;
+}
+
+.admin-order-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.admin-order-items-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.admin-order-items-list li {
+    padding: 5px 0;
+}
+
+.admin-orders-back {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.admin-back-button {
+    background-color: #db7093;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.admin-back-button:hover {
+    background-color: #c06083;
+}
+
+/* Order Confirmation Container */
+.order-confirmation-container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+}
+
+/* Header Styles */
+.order-confirmation-header {
+    text-align: center;
+    color: #db7093;
+    font-size: 28px;
+    margin-bottom: 20px;
+}
+
+/* Form Group Styles */
+.form-group {
+    margin-bottom: 15px;
+}
+
+/* Label Styles */
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
+}
+
+/* Input and Select Styles */
+.form-control {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #db7093;
+    box-shadow: 0 0 5px rgba(219, 112, 147, 0.5);
+}
+
+/* Address Section Styles */
+.order-confirmation-container h3 {
+    color: #db7093;
+    margin: 20px 0 10px;
+    font-size: 24px;
+}
+
+/* New Address Fields */
+#new_address_fields {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    margin-bottom: 20px;
+}
+
+#new_address_fields .form-group {
+    margin-bottom: 10px;
+}
+
+/* Button Styles */
+.order-btn {
+    display: inline-block;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    margin: 5px;
+}
+
+.order-btn-primary {
+    background-color: #db7093;
+    color: #fff;
+    border: none;
+}
+
+.order-btn-secondary {
+    background-color: #6c757d;
+    color: #fff;
+    border: none;
+}
+
+.order-btn-primary:hover {
+    background-color: #c0637d;
+}
+
+.order-btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+/* Alerts */
+.order-alert-container {
+    margin-bottom: 20px;
+}
+
+.order-alert {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.order-alert-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.order-alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* Centering Elements */
+.order-text-center {
+    text-align: center;
 }

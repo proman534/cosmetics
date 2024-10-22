@@ -1,5 +1,5 @@
 from MySQLdb import IntegrityError
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, make_response
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import or_
 from flask_migrate import Migrate
@@ -12,6 +12,9 @@ import uuid
 import string
 import re
 from dotenv import load_dotenv
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+from io import BytesIO
 
 
 
@@ -41,12 +44,17 @@ def clear_cart():
 
 # User Model
 class User(db.Model):
+    __tablename__ = 'user'  # Make sure this matches the table name
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False) 
     phone = db.Column(db.String(15), nullable=False)
-    user_type = db.Column(db.String(10), default='user')  # Default to 'user'
+    user_type = db.Column(db.String(10), default='user')
+
+    orders = db.relationship('Order', back_populates='user', lazy=True)
+    addresses = db.relationship('Address', backref='user', lazy=True)
+
 
 # Product Model
 class Product(db.Model):
@@ -93,6 +101,7 @@ class OrderItem(db.Model):
     order_id = db.Column(db.Integer, db.ForeignKey('orders.id'), nullable=False)  # Foreign key to Order
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'), nullable=False)
     product_name = db.Column(db.String(100), nullable=False)
+    product_image = db.Column(db.String(100), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
     price = db.Column(db.Float, nullable=False)
     total = db.Column(db.Float, nullable=False)
@@ -100,24 +109,43 @@ class OrderItem(db.Model):
     def __repr__(self):
         return f'<OrderItem {self.product_name}>'
 
-# Update to Order Model to reflect relationship
+
+
+# Order Model
 class Order(db.Model):
     __tablename__ = 'orders'
     id = db.Column(db.Integer, primary_key=True)
     order_number = db.Column(db.String(8), unique=True, nullable=False)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Use 'user.id'
+    address_id = db.Column(db.Integer, db.ForeignKey('addresses.id'), nullable=True)
     total_amount = db.Column(db.Float, nullable=False)
     delivery_date = db.Column(db.DateTime, nullable=False)
     placed_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
     order_items = db.relationship('OrderItem', backref='order', lazy=True)
+    user = db.relationship('User', back_populates='orders')  # Ensure it matches with the User model
+    address = db.relationship('Address', backref='orders', lazy=True)
 
-    def __init__(self, order_number, user_id, total_amount, delivery_date):
+    def __init__(self, order_number, user_id, total_amount, delivery_date, address_id=None):
         self.order_number = order_number
         self.user_id = user_id
         self.total_amount = total_amount
         self.delivery_date = delivery_date
+        self.address_id = address_id
 
+
+
+class Address(db.Model):
+    __tablename__ = 'addresses'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Use 'user.id'
+    address_line = db.Column(db.String(255), nullable=False)
+    city = db.Column(db.String(100), nullable=False)
+    state = db.Column(db.String(100), nullable=False)
+    postal_code = db.Column(db.String(20), nullable=False)
+    country = db.Column(db.String(100), nullable=False)
+    address_type = db.Column(db.Enum('default', 'secondary'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 # Utility function to get cart item count
 def get_cart_item_count():
@@ -298,6 +326,24 @@ def admin():
     
     return render_template('admin.html',  products=products)
 
+from flask import redirect, session, flash, url_for
+
+@app.route('/admin/orders')
+def admin_orders():
+    # Check if user is logged in and is admin
+    user_id = session.get('user_id')
+    if not user_id:
+        flash('Please log in to access this page.', 'warning')
+        return redirect(url_for('login'))
+
+    user = User.query.get(user_id)
+    if user.user_type != 'admin':
+        flash('You do not have permission to access this page.', 'danger')
+        return redirect(url_for('home'))
+
+    # Fetch all orders for admin view
+    orders = Order.query.all()
+    return render_template('admin_order.html', orders=orders)
 
 
 # Route for signup
@@ -361,10 +407,6 @@ def submit_contact():
     flash('Your message has been sent successfully!', 'success')
     return redirect(url_for('contact'))
 
-
-# Route for Search
-from sqlalchemy import or_
-import re
 
 # Route for Search
 @app.route('/search', methods=['GET', 'POST'])
@@ -436,6 +478,7 @@ def place_order():
                     order_id=new_order.id,
                     product_id=cart_item.product_id,
                     product_name=cart_item.name,
+                    product_image=cart_item.image,
                     quantity=cart_item.quantity,
                     price=cart_item.price,
                     total=cart_item.total
@@ -455,46 +498,81 @@ def place_order():
 
 @app.route('/order_confirmation', methods=['GET', 'POST'])
 def order_confirmation():
+    user = session.get('user')
     user_id = session.get('user_id')  # Ensure user is logged in
-    order = Order.query.filter_by(user_id=user_id).order_by(Order.id.desc()).first()
     if not user_id:
         flash("Please log in to continue.", "danger")
         return redirect(url_for('login'))
 
+    # Fetch user's addresses
+    addresses = Address.query.filter_by(user_id=user_id).all()
+
     if request.method == 'POST':
-        # Fetch address and payment details from the form
-        address = request.form.get('address')
-        payment_method = request.form.get('payment_method')
+        selected_address_id = request.form.get('address_id')
+        add_new_address = request.form.get('add_new_address')  # Checkbox or flag to indicate if a new address will be added
+        
+        # If a new address is to be added, collect the details
+        if add_new_address:
+            new_address_line = request.form.get('new_address_line')
+            new_city = request.form.get('new_city')
+            new_state = request.form.get('new_state')
+            new_postal_code = request.form.get('new_postal_code')
+            new_country = request.form.get('new_country')
 
-        if not address or not payment_method:
-            flash("Please provide all required details.", "danger")
-            return redirect(url_for('order_confirmation'))
+            if not new_address_line or not new_city or not new_state or not new_postal_code or not new_country:
+                flash("Please provide all address details.", "danger")
+                return redirect(url_for('order_confirmation'))
 
-        # Fetch the user's latest order (assuming it was just created)
-        order = Order.query.filter_by(user_id=user_id).order_by(Order.id.desc()).first()
+            # Add new address as secondary
+            new_address = Address(
+                user_id=user_id,
+                address_line=new_address_line,
+                city=new_city,
+                state=new_state,
+                postal_code=new_postal_code,
+                country=new_country,
+                address_type='secondary'  # Set as secondary address
+            )
+            db.session.add(new_address)
+            db.session.commit()
 
-        if order:
-            # Update order with address and payment method
-            order.address = address
-            order.payment_method = payment_method
+            selected_address_id = new_address.id  # Use the new address ID for the order
 
-            try:
-                db.session.commit()  # Save the updated order
-                clear_cart()  # Empty the cart after order confirmation
-                flash("Order placed successfully!", "success")
-                return redirect(url_for('order_success', order_number=order.order_number))
-            except IntegrityError:
-                db.session.rollback()
-                flash("An error occurred while confirming your order. Please try again.", "danger")
-        else:
-            flash("No active order found. Please try again.", "danger")
-            return redirect(url_for('cart'))
+        # If a primary address is selected
+        if selected_address_id:
+            order = Order.query.filter_by(user_id=user_id).order_by(Order.id.desc()).first()
 
-    return render_with_cart('order_confirmation.html', order=order)
+            if order:
+                # Update order with the selected address
+                order.address_id = selected_address_id  # Set the foreign key to the address ID
+                try:
+                    db.session.commit()  # Save the updated order
+                    clear_cart()  # Empty the cart after order confirmation
+                    flash("Order placed successfully!", "success")
+                    return redirect(url_for('order_success', order_number=order.order_number))
+                except IntegrityError:
+                    db.session.rollback()
+                    flash("An error occurred while confirming your order. Please try again.", "danger")
+            else:
+                flash("No active order found. Please try again.", "danger")
+                return redirect(url_for('cart'))
+
+    return render_with_cart('order_confirmation.html', addresses=addresses, user=user)
 
 @app.route('/order_success/<order_number>')
 def order_success(order_number):
-    return render_with_cart('order_success.html', order_number=order_number)
+    # Retrieve the specific order by its order number
+    order = Order.query.filter_by(order_number=order_number).first_or_404()  # Retrieve order by order_number or return 404
+    cart_count = get_cart_item_count()
+    # Retrieve the items related to this order
+    order_items = OrderItem.query.filter_by(order_id=order.id).all()  # Get related order items
+    
+    user = session.get('user')  # Get the current user from the session
+
+    # Render the template with all the necessary data
+    return render_template('order_success.html', order=order, order_items=order_items, user=user, cart_count=cart_count)
+
+
 
 
 # Function to generate order number
@@ -570,12 +648,14 @@ def update_cart(item_id):
 
 @app.route('/orders')
 def orders():
+    user = session.get('user')
+    user_id = session['user_id']
+    cart_count = get_cart_item_count()
+    
     if 'user_id' not in session:
         flash('Please log in to view your orders.', 'danger')
         return redirect(url_for('login'))
 
-    user_id = session['user_id']
-    
     # Fetch all orders placed by the user, along with the related items
     orders = Order.query.filter_by(user_id=user_id).all()
 
@@ -583,7 +663,52 @@ def orders():
     for order in orders:
         order.items = OrderItem.query.filter_by(order_id=order.id).all()
 
-    return render_template('orders.html', orders=orders)
+    return render_template('orders.html', orders=orders, user=user, cart_count=cart_count)
+
+@app.route('/generate_invoice/<order_number>')
+def generate_invoice(order_number):
+    # Retrieve the order using order_number instead of order_id
+    order = Order.query.filter_by(order_number=order_number).first_or_404()
+    order_items = OrderItem.query.filter_by(order_id=order.id).all()
+
+    # Create an in-memory PDF using BytesIO
+    pdf_stream = BytesIO()
+    c = canvas.Canvas(pdf_stream, pagesize=letter)
+
+    # Add content to the PDF (Header)
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(100, 750, f"Invoice for Order #{order.order_number}")  # Use order_number for clarity
+
+    # Add Order Items to the PDF
+    c.setFont("Helvetica", 12)
+    y_position = 700  # Y-position to start listing items
+    for item in order_items:
+        c.drawString(100, y_position, f"{item.product_name} - {item.quantity} x ₹{item.price} = ₹{item.total}")
+        y_position -= 20  # Move down for the next item
+
+    # Add Total Amount
+    c.setFont("Helvetica-Bold", 14)
+    c.drawString(100, y_position - 20, f"Total: ₹{order.total_amount}")
+
+    # Finalize the PDF
+    c.showPage()
+    c.save()
+    pdf_stream.seek(0)  # Reset stream pointer to the beginning
+
+    # Create Flask response for PDF download/print
+    response = make_response(pdf_stream.read())
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'inline; filename=invoice_{order.order_number}.pdf'  # Use order_number in the filename
+    return response
+
+@app.route('/invoice/<order_number>')
+def invoice(order_number):
+    # Retrieve the order using order_number instead of order_id
+    order = Order.query.filter_by(order_number=order_number).first_or_404()
+    order_items = OrderItem.query.filter_by(order_id=order.id).all()
+
+    # Render the invoice template with the order and order items
+    return render_template('invoice.html', order=order, order_items=order_items)
 
 
 # Run the application
