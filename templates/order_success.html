@@ -73,7 +73,7 @@
 
         <div class="order-details">
             <h2>Order Details</h2>
-            <p><strong>Delivery Address:</strong> {{ order.address }}</p>
+            <p><strong>Delivery Address:</strong> {{ address.address_line }}, {{ address.city }}, {{ address.state }} {{ address.postal_code }}</p>
             <p><strong>Order Date:</strong> {{ order.placed_at.strftime('%Y-%m-%d %H:%M') }}</p>
             <p><strong>Delivery Date:</strong> {{ order.delivery_date.strftime('%Y-%m-%d') }}</p>
 

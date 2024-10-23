@@ -63,6 +63,7 @@ class Product(db.Model):
     description = db.Column(db.String(500), nullable=True)
     price = db.Column(db.Float, nullable=False)
     category = db.Column(db.String(50), nullable=False)
+    company =  db.Column(db.String(100), nullable=False)
     stock = db.Column(db.Integer, nullable=False)
     image = db.Column(db.String(200), nullable=False)
 
@@ -195,6 +196,7 @@ def add_product():
         description = request.form['description']
         price = float(request.form['price'])
         category = request.form['category']
+        company  = request.form['company']
         stock = int(request.form['stock'])
         image = request.files['image']
 
@@ -203,7 +205,7 @@ def add_product():
             image_filename = secure_filename(image.filename)
             image.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
 
-        new_product = Product(name=name, description=description, price=price, category=category, stock=stock, image=image_filename)
+        new_product = Product(name=name, description=description, price=price, category=category, company=company, stock=stock, image=image_filename)
         try:
             db.session.add(new_product)
             db.session.commit()
@@ -432,7 +434,8 @@ def search():
         # Create a search filter for each term
         filters = [or_(
             Product.name.ilike(f'%{term}%'),
-            Product.category.ilike(f'%{term}%')
+            Product.category.ilike(f'%{term}%'),
+            Product.company.ilike(f'%{term}%')
         ) for term in search_terms]
 
         # Combine filters with OR logic
@@ -441,60 +444,105 @@ def search():
 
     return render_with_cart('shop.html', products=products, user=user, found=found)
 
-
-
-
 @app.route('/place_order', methods=['GET', 'POST'])
 def place_order():
-    if request.method == 'POST':
-        user_id = session.get('user_id')
-        session_id = get_session_id()
+    user_id = session.get('user_id')  # Check if the user is logged in
 
-        if user_id:
-            # Retrieve cart items for logged-in user
-            cart_items = CartItem.query.filter_by(user_id=user_id).all()
-        else:
-            # Retrieve cart items for guest user
-            cart_items = CartItem.query.filter_by(session_id=session_id).all()
+    # If user is not logged in, render the user details form
+    if not user_id:
+        if request.method == 'POST':
+            # Get form data from 'user_details.html'
+            username = request.form.get('username')
+            email = request.form.get('email')
+            phone = request.form.get('phone')
 
-        if not cart_items:
-            flash('Your cart is empty.', 'info')
-            return redirect(url_for('cart'))
+            print(f"Username: {username}, Email: {email}, Phone: {phone}")
 
-        total_amount = sum(item.total for item in cart_items)
-        delivery_date = datetime.now() + timedelta(days=5)
-        order_number = generate_unique_order_number()
+            # Check for missing fields
+            if not username or not email or not phone:
+                flash('Please fill in all fields.', 'warning')
+                return render_template('user_details.html')
 
-        # Create a new Order
-        new_order = Order(order_number=order_number, user_id=user_id, total_amount=total_amount, delivery_date=delivery_date)
+            # Check if the user already exists by email
+            existing_user = User.query.filter_by(email=email).first()
+            if existing_user:
+                # Log in the existing user
+                session['user_id'] = existing_user.id  # Store user ID in the session
+                flash('Logged in successfully!', 'success')
+                return redirect(url_for('place_order'))  # Retry placing the order
 
-        try:
-            db.session.add(new_order)
-            db.session.flush()  # Flush to get the order ID for order items
+            # Create new user
+            new_user = User(
+                username=username,
+                email=email,
+                phone=phone,
+                password=generate_password_hash('123456'),  # Hash the default password
+                user_type='guest'
+            )
 
-            # Create OrderItems for each CartItem
-            for cart_item in cart_items:
-                order_item = OrderItem(
-                    order_id=new_order.id,
-                    product_id=cart_item.product_id,
-                    product_name=cart_item.name,
-                    product_image=cart_item.image,
-                    quantity=cart_item.quantity,
-                    price=cart_item.price,
-                    total=cart_item.total
-                )
-                db.session.add(order_item)
+            try:
+                db.session.add(new_user)
+                db.session.commit()
+                session['user_id'] = new_user.id  # Log in the new user
+                flash('Account created successfully!', 'success')
+                return redirect(url_for('place_order'))  # Retry placing the order
+            except IntegrityError:
+                db.session.rollback()
+                flash('Error creating account. Please try again.', 'danger')
+                return render_template('user_details.html')
 
-            db.session.commit()  # Commit all changes
-            clear_cart()  # Clear the cart after placing the order
-            flash('Order placed successfully!', 'success')
-            return redirect(url_for('order_confirmation'))
+        # Render the user details page if the user is not logged in and it's a GET request
+        return render_template('user_details.html')
 
-        except IntegrityError:
-            db.session.rollback()
-            flash('An error occurred while placing your order. Please try again.', 'danger')
+    # If the user is logged in, retrieve cart items
+    cart_items = CartItem.query.filter_by(user_id=user_id).all()
+    if not cart_items:
+        flash('Your cart is empty.', 'info')
+        return redirect(url_for('cart'))
 
-    return render_with_cart('user_details.html')
+    # Calculate total amount and generate order details
+    total_amount = sum(item.total for item in cart_items)
+    delivery_date = datetime.now() + timedelta(days=5)
+    order_number = generate_unique_order_number()
+
+    # Create a new Order
+    new_order = Order(
+        order_number=order_number,
+        user_id=user_id,
+        total_amount=total_amount,
+        delivery_date=delivery_date
+    )
+
+    try:
+        db.session.add(new_order)
+        db.session.flush()  # Flush to get the order ID
+
+        # Create OrderItems for each cart item
+        for cart_item in cart_items:
+            order_item = OrderItem(
+                order_id=new_order.id,
+                product_id=cart_item.product_id,
+                product_name=cart_item.name,
+                product_image=cart_item.image,
+                quantity=cart_item.quantity,
+                price=cart_item.price,
+                total=cart_item.total
+            )
+            db.session.add(order_item)
+
+        db.session.commit()  # Commit the changes
+        clear_cart()  # Clear the cart after successful order
+
+        flash('Order placed successfully!', 'success')
+        return redirect(url_for('order_confirmation'))
+
+    except IntegrityError:
+        db.session.rollback()
+        flash('An error occurred while placing your order. Please try again.', 'danger')
+
+    return redirect(url_for('cart'))  # Fallback redirect in case of errors
+
+
 
 @app.route('/order_confirmation', methods=['GET', 'POST'])
 def order_confirmation():
@@ -566,11 +614,11 @@ def order_success(order_number):
     cart_count = get_cart_item_count()
     # Retrieve the items related to this order
     order_items = OrderItem.query.filter_by(order_id=order.id).all()  # Get related order items
-    
+    address = order.address
     user = session.get('user')  # Get the current user from the session
 
     # Render the template with all the necessary data
-    return render_template('order_success.html', order=order, order_items=order_items, user=user, cart_count=cart_count)
+    return render_template('order_success.html', order=order, address=address, order_items=order_items, user=user, cart_count=cart_count)
 
 
 
