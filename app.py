@@ -148,6 +148,12 @@ class Address(db.Model):
     address_type = db.Column(db.Enum('default', 'secondary'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
+class CompanyDetails(db.Model):
+    __tablename__ = 'company_details'
+    company_name = db.Column(db.String(255), primary_key=True)
+    category = db.Column(db.String(100))
+    image = db.Column(db.String(255))
+
 # Utility function to get cart item count
 def get_cart_item_count():
     user_id = session.get('user_id')  # Get user_id from the session
