@@ -901,25 +901,56 @@ def checkout():
         delivery_charge=delivery_charge  # Pass delivery charge to the template
     )
 
+OPENCAGE_API_KEY = '52b7410b7e004496a84e41255d539076'
+
+def get_lat_lon_from_address(address):
+    """Fetch latitude and longitude from OpenCage API for the given address."""
+    url = 'https://api.opencagedata.com/geocode/v1/json'
+    params = {
+        'q': address,
+        'key': OPENCAGE_API_KEY,
+        'limit': 1,
+    }
+    response = request.get(url, params=params)
+    data = response.json()
+
+    if data['results']:
+        location = data['results'][0]['geometry']
+        return location['lat'], location['lng']
+    return None, None
+
 @app.route('/update_location', methods=['POST'])
 def update_location():
-    data = request.get_json()
     user_id = session.get('user_id')
-    latitude = data.get('latitude')
-    longitude = data.get('longitude')
 
-    if user_id and latitude is not None and longitude is not None:
-        user = User.query.get(user_id)
-        if user:
-            print(f"Updating location for user {user_id}: {latitude}, {longitude}")  # Debugging log
-            user.latitude = latitude
-            user.longitude = longitude
-            db.session.commit()  # Commit the changes
-            print(f"Updated location for user {user_id}: {user.latitude}, {user.longitude}")  # Debug log
-            return jsonify({'success': True})
-    print(f"Failed to update location: user_id={user_id}, latitude={latitude}, longitude={longitude}")  # Debug log
-    return jsonify({'success': False}), 400
+    # Check if user_id exists in the session
+    if not user_id:
+        return jsonify({'success': False, 'message': 'User not logged in'}), 400
 
+    # Fetch the address associated with the user_id
+    address_entry = Address.query.filter_by(user_id=user_id).first()
+    
+    if not address_entry:
+        return jsonify({'success': False, 'message': 'No address found for the user'}), 400
+
+    # Assuming address_entry contains fields: street, city, state, and zip
+    full_address = f"{address_entry.street}, {address_entry.city}, {address_entry.state}, {address_entry.zip}"
+
+    # Convert the address to latitude and longitude
+    latitude, longitude = get_lat_lon_from_address(full_address)
+
+    if latitude is None or longitude is None:
+        return jsonify({'success': False, 'message': 'Unable to fetch location'}), 400
+
+    # Update the User's latitude and longitude in the database
+    user = User.query.get(user_id)
+    if user:
+        user.latitude = latitude
+        user.longitude = longitude
+        db.session.commit()
+        return jsonify({'success': True, 'latitude': latitude, 'longitude': longitude})
+
+    return jsonify({'success': False, 'message': 'User not found'}), 400
 def calculate_distance(lat2, lon2):
     """Calculate the distance between two points (latitude, longitude) using the Haversine formula."""
     R = 6371.0  # Radius of the Earth in kilometers
