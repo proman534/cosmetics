@@ -1,5 +1,5 @@
 from MySQLdb import IntegrityError
-from flask import Flask, render_template, request, redirect, url_for, session, flash, make_response
+from flask import Flask, render_template, request, redirect, url_for, session, flash, make_response,jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import or_
 from flask_migrate import Migrate
@@ -15,7 +15,8 @@ from dotenv import load_dotenv
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 from io import BytesIO
-
+from datetime import datetime, timedelta
+from math import radians, sin, cos, sqrt, atan2
 
 
 # Load environment variables
@@ -23,7 +24,7 @@ load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:root%40123@localhost/cosmetics"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/images'
 
@@ -51,7 +52,8 @@ class User(db.Model):
     email = db.Column(db.String(150), unique=True, nullable=False) 
     phone = db.Column(db.String(15), nullable=False)
     user_type = db.Column(db.String(10), default='user')
-
+    latitude = db.Column(db.Float, nullable=True)  # Add this line
+    longitude = db.Column(db.Float, nullable=True) 
     orders = db.relationship('Order', back_populates='user', lazy=True)
     addresses = db.relationship('Address', backref='user', lazy=True)
 
@@ -120,6 +122,7 @@ class Order(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Use 'user.id'
     address_id = db.Column(db.Integer, db.ForeignKey('addresses.id'), nullable=True)
     total_amount = db.Column(db.Float, nullable=False)
+    delivery_charge = db.Column(db.Float, nullable=False)  # New delivery_charge field
     delivery_date = db.Column(db.DateTime, nullable=False)
     placed_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
@@ -127,12 +130,14 @@ class Order(db.Model):
     user = db.relationship('User', back_populates='orders')  # Ensure it matches with the User model
     address = db.relationship('Address', backref='orders', lazy=True)
 
-    def __init__(self, order_number, user_id, total_amount, delivery_date, address_id=None):
+    def __init__(self, order_number, user_id, total_amount, delivery_charge, delivery_date, address_id=None):
         self.order_number = order_number
         self.user_id = user_id
         self.total_amount = total_amount
+        self.delivery_charge = delivery_charge  # Initialize the delivery_charge
         self.delivery_date = delivery_date
         self.address_id = address_id
+
 
 
 
@@ -450,6 +455,31 @@ def search():
 
     return render_with_cart('shop.html', products=products, user=user, found=found)
 
+
+def calculate_distance(lat1, lon1, lat2, lon2):
+    """Calculate the distance between two points (latitude, longitude) using the Haversine formula."""
+    R = 6371.0  # Radius of the Earth in kilometers
+    lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
+
+    # Differences in coordinates
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+
+    # Haversine formula
+    a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    distance = R * c  # Distance in kilometers
+    return distance
+
+def calculate_delivery_charge(distance):
+    """Calculate the delivery charge based on the distance."""
+    if distance <= 5:
+        return 50  # Fixed rate for distances up to 5 km
+    elif distance <= 20:
+        return 75  # Fixed rate for distances between 5 km and 20 km
+    else:
+        return round(125 + (distance - 20) * 10, 2)  # Round to two decimal places
+
 @app.route('/place_order', methods=['GET', 'POST'])
 def place_order():
     user_id = session.get('user_id')  # Check if the user is logged in
@@ -461,8 +491,6 @@ def place_order():
             username = request.form.get('username')
             email = request.form.get('email')
             phone = request.form.get('phone')
-
-            print(f"Username: {username}, Email: {email}, Phone: {phone}")
 
             # Check for missing fields
             if not username or not email or not phone:
@@ -500,22 +528,39 @@ def place_order():
         # Render the user details page if the user is not logged in and it's a GET request
         return render_template('user_details.html')
 
-    # If the user is logged in, retrieve cart items
+    # If the user is logged in, retrieve user details
+    user = User.query.get(user_id)
+    if not user.latitude or not user.longitude:
+        flash('Please allow location access to proceed with the order.', 'warning')
+        return redirect(url_for('cart'))
+
+    # Mart's fixed location (latitude and longitude)
+    mart_lat, mart_lon = 12.9716, 77.5946  # Example coordinates for the mart
+
+    # Calculate distance from user to the mart
+    distance = calculate_distance(user.latitude, user.longitude, mart_lat, mart_lon)
+    delivery_charge = calculate_delivery_charge(distance)
+
+    # Retrieve cart items
     cart_items = CartItem.query.filter_by(user_id=user_id).all()
     if not cart_items:
         flash('Your cart is empty.', 'info')
         return redirect(url_for('cart'))
 
-    # Calculate total amount and generate order details
+    # Calculate total amount (sum of all item totals plus delivery charge)
     total_amount = sum(item.total for item in cart_items)
-    delivery_date = datetime.now() + timedelta(days=5)
+    total_amount_with_delivery = total_amount + delivery_charge  # Add delivery charge to the total
+
+    # Generate order details
     order_number = generate_unique_order_number()
+    delivery_date = datetime.now() + timedelta(days=5)
 
     # Create a new Order
     new_order = Order(
         order_number=order_number,
         user_id=user_id,
-        total_amount=total_amount,
+        total_amount=round(total_amount_with_delivery, 2),  # Round total amount to two decimal places
+        delivery_charge=round(delivery_charge, 2),  # Store as a float rounded to two decimal places
         delivery_date=delivery_date
     )
 
@@ -536,8 +581,9 @@ def place_order():
             )
             db.session.add(order_item)
 
-        db.session.commit()  # Commit the changes
-        clear_cart()  # Clear the cart after successful order
+        # Commit the changes
+        db.session.commit()
+        clear_cart()  # Clear the cart after a successful order
 
         flash('Order placed successfully!', 'success')
         return redirect(url_for('order_confirmation'))
@@ -547,7 +593,6 @@ def place_order():
         flash('An error occurred while placing your order. Please try again.', 'danger')
 
     return redirect(url_for('cart'))  # Fallback redirect in case of errors
-
 
 
 @app.route('/order_confirmation', methods=['GET', 'POST'])
@@ -655,15 +700,70 @@ def checkout():
     user = session.get('user')
     user_id = session.get('user_id')
     session_id = get_session_id()
+    
     if user_id:
         # Retrieve cart items for logged-in user
         cart_items = CartItem.query.filter_by(user_id=user_id).all()
+        
+        # Get user's latitude and longitude
+        user = User.query.get(user_id)
+        user_latitude = user.latitude
+        user_longitude = user.longitude
     else:
         # Retrieve cart items for guest user
         cart_items = CartItem.query.filter_by(session_id=session_id).all()
+        user_latitude = None
+        user_longitude = None
+
+    # Check if cart is empty
+    if not cart_items:
+        flash('Your cart is empty. Please add items to your cart before proceeding to checkout.', 'info')
+        return redirect(url_for('shop'))  # Redirect to your shopping page
+
+    # Calculate the total amount for items in the cart
     total_amount = sum(item.total for item in cart_items)
-    user = session.get('user')
-    return render_with_cart('checkout.html', cart_items=cart_items, total_amount=total_amount, user=user)
+
+    # Calculate delivery charge if the user has a location
+    if user_latitude is not None and user_longitude is not None:
+        # Update mart's fixed location with new coordinates
+        mart_lat, mart_lon = 17.43775, 78.43265  # New coordinates for the mart
+        
+        # Calculate distance from user to the mart
+        distance = calculate_distance(user_latitude, user_longitude, mart_lat, mart_lon)
+        delivery_charge = calculate_delivery_charge(distance)
+    else:
+        delivery_charge = 0  # Default delivery charge if no location is available
+
+    # Pass the total amount excluding delivery charge for display
+    return render_with_cart(
+        'checkout.html', 
+        cart_items=cart_items, 
+        total_amount=total_amount,  # Total amount excludes delivery charge for display
+        user=user,
+        delivery_charge=delivery_charge  # Pass delivery charge to the template
+    )
+
+
+
+@app.route('/update_location', methods=['POST'])
+def update_location():
+    data = request.get_json()
+    user_id = session.get('user_id')
+    latitude = data.get('latitude')
+    longitude = data.get('longitude')
+
+    if user_id and latitude is not None and longitude is not None:
+        user = User.query.get(user_id)
+        if user:
+            print(f"Updating location for user {user_id}: {latitude}, {longitude}")  # Debugging log
+            user.latitude = latitude
+            user.longitude = longitude
+            db.session.commit()  # Commit the changes
+            print(f"Updated location for user {user_id}: {user.latitude}, {user.longitude}")  # Debug log
+            return jsonify({'success': True})
+    print(f"Failed to update location: user_id={user_id}, latitude={latitude}, longitude={longitude}")  # Debug log
+    return jsonify({'success': False}), 400
+
 
 @app.route('/update_cart/<int:item_id>', methods=['POST'])
 def update_cart(item_id):

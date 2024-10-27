@@ -106,15 +106,24 @@
                             </div>
                         </td>
                         <td>{{ item.name }}</td>
-                        <td>₹{{ item.price }}</td>
+                        <td>₹{{ '%.2f' | format(item.price) }}</td>
                         <td>{{ item.quantity }}</td>
-                        <td>₹{{ item.total }}</td>
+                        <td>₹{{ '%.2f' | format(item.total) }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
 
-            <h2>Total Amount: ₹{{ total_amount }}</h2>
+            <!-- Display total amount of items -->
+            <h2>Items Total: ₹{{ '%.2f' | format(total_amount) }}</h2>
+
+            <!-- Display delivery charges -->
+            <h2>Delivery Charges: ₹{{ '%.2f' | format(delivery_charge) }}</h2>
+
+            <!-- Calculate and display grand total -->
+            <h2>Grand Total: ₹{{ '%.2f' | format(total_amount + delivery_charge) }}</h2>
+
+            <!-- Place order form -->
             <form action="{{ url_for('place_order') }}" method="POST">
                 <button type="submit">Place Order</button>
             </form>
@@ -122,4 +131,40 @@
             <p class="empty-cart">Your cart is empty. Please add products to your cart.</p>
         {% endif %}
     </main>
+
+    <script>
+        // Get user's location using the Geolocation API
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                saveLocation(position);
+            }, function() {
+                console.error("Geolocation is not enabled or permission denied.");
+            });
+        } else {
+            console.error("Geolocation is not supported by this browser.");
+        }
+
+        function saveLocation(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+
+            // Send the coordinates to the server
+            fetch('/update_location', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ latitude: latitude, longitude: longitude }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Location updated successfully!');
+                } else {
+                    console.error('Failed to update location.');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
 {% endblock %}
