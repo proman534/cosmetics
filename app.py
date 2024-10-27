@@ -639,107 +639,119 @@ def search():
 
 
 @app.route('/place_order', methods=['GET', 'POST'])
-def place_order():
+def place_order(): 
+    # Helper: Validate form input
+    def validate_user_form(username, email, phone):
+        if not all([username, email, phone]):
+            flash('Please fill in all fields.', 'warning')
+            return False
+        return True
+
+    # Check if the user is already logged in
     user_id = session.get('user_id')
+    user = User.query.get(user_id)
+    if user_id:
+        # If user is logged in, retrieve cart items
+        if not user.latitude or not user.longitude:
+            flash('Please allow location access to proceed with the order.', 'warning')
+            return redirect(url_for('cart'))
 
-    if not user_id:  # User not logged in
-        flash('Please log in or create an account to place an order.', 'danger')
-        return redirect(url_for('user_details'))  # Redirect to user details form
 
-    user = User.query.get(user_id)  # Retrieve user after checking login
+        # Calculate distance from user to the mart
+        distance = calculate_distance(user.latitude, user.longitude)
+        print(f"{distance:.2f}, km")
+        delivery_charge = calculate_delivery_charge(distance)
+        cart_items = CartItem.query.filter_by(user_id=user_id).all()
+        if not cart_items:
+            flash('Your cart is empty.', 'info')
+            return redirect(url_for('cart'))
 
-    if not user.latitude or not user.longitude:  # Ensure location access
-        flash('Please allow location access to proceed with the order.', 'warning')
-        return redirect(url_for('cart'))
+        # Calculate total amount and generate order details
+        total_amount = sum(item.total for item in cart_items)  + delivery_charge
 
-    # Fetch cart items after login validation
-    cart_items = CartItem.query.filter_by(user_id=user_id).all()
-    if not cart_items:
-        flash('Your cart is empty. Please add items to proceed.', 'info')
-        return redirect(url_for('cart'))
 
-    # Calculate delivery distance and charges
-    distance = calculate_distance(user.latitude, user.longitude)
-    delivery_charge = calculate_delivery_charge(distance)
-    total_amount = sum(item.total for item in cart_items) + delivery_charge
+        delivery_date = datetime.now() + timedelta(days=5)
+        order_number = generate_unique_order_number()
 
-    order = Order(
-        order_number=generate_unique_order_number(),
-        user_id=user_id,
-        total_amount=total_amount,
-        delivery_date=datetime.now() + timedelta(days=5),
-        delivery_charge=delivery_charge,
-    )
+        # Create a new Order
+        new_order = Order(
+            order_number=order_number,
+            user_id=user_id,
+            total_amount=total_amount,
+            delivery_date=delivery_date,
+            delivery_charge = delivery_charge
+        )
 
-    try:
-        db.session.add(order)
-        db.session.flush()
+        try:
+            db.session.add(new_order)
+            db.session.flush()  # Flush to get the order ID
 
-        # Add items to the order
-        for cart_item in cart_items:
-            order_item = OrderItem(
-                order_id=order.id,
-                product_id=cart_item.product_id,
-                product_name=cart_item.name,
-                product_image=cart_item.image,
-                quantity=cart_item.quantity,
-                price=cart_item.price,
-                total=cart_item.total,
-            )
-            db.session.add(order_item)
+            # Create OrderItems for each cart item
+            for cart_item in cart_items:
+                order_item = OrderItem(
+                    order_id=new_order.id,
+                    product_id=cart_item.product_id,
+                    product_name=cart_item.name,
+                    product_image=cart_item.image,
+                    quantity=cart_item.quantity,
+                    price=cart_item.price,
+                    total=cart_item.total
+                )
+                db.session.add(order_item)
 
-        db.session.commit()
-        clear_cart()  # Clear cart on successful order placement
+            db.session.commit()  # Commit the changes
+            clear_cart()
+            
+            flash('Order placed successfully!', 'success')
+            return redirect(url_for('order_confirmation'))
 
-        flash('Order placed successfully!', 'success')
-        return redirect(url_for('order_confirmation'))
+        except IntegrityError:
+            db.session.rollback()
+            flash('An error occurred while placing your order. Please try again.', 'danger')
+            return redirect(url_for('cart'))  # Fallback redirect in case of errors
 
-    except IntegrityError:
-        db.session.rollback()
-        flash('An error occurred. Please try again.', 'danger')
-        return redirect(url_for('cart'))
-
-@app.route('/user_details', methods=['GET', 'POST'])
-def user_details():
+    # If user is not logged in, handle user details form submission
     if request.method == 'POST':
+        # Extract form data
         username = request.form.get('username')
         email = request.form.get('email')
         phone = request.form.get('phone')
 
-        if not all([username, email, phone]):
-            flash('Please fill in all fields.', 'warning')
+        # Validate form input
+        if not validate_user_form(username, email, phone):
             return render_template('user_details.html')
 
+        # Check if the user already exists by email
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
-            session['user_id'] = existing_user.id  # Log in existing user
+            # Log in the existing user
+            session['user_id'] = existing_user.id
             flash('Logged in successfully!', 'success')
             return redirect(url_for('place_order'))
 
+        # Create a new guest user
+        new_user = User(
+            username=username,
+            email=email,
+            phone=phone,
+            password=generate_password_hash('123456'),  # Default password
+            user_type='guest'
+        )
+
+        # Add new user to the database
         try:
-            new_user = User(
-                username=username,
-                email=email,
-                phone=phone,
-                password=generate_password_hash('123456'),
-                user_type='guest',
-            )
             db.session.add(new_user)
             db.session.commit()
-            session['user_id'] = new_user.id  # Log in new user
-
-            CartItem.query.filter_by(user_id=None).update({'user_id': new_user.id})
-            db.session.commit()
-
+            session['user_id'] = new_user.id  # Log in the new user
             flash('Account created successfully!', 'success')
             return redirect(url_for('place_order'))
-
         except IntegrityError:
             db.session.rollback()
-            flash('An account with this email already exists.', 'danger')
+            flash('An account with this email already exists or an error occurred.', 'danger')
+            return render_template('user_details.html')
 
+    # Render the user details form for new users
     return render_template('user_details.html')
-
 
 
 @app.route('/order_confirmation', methods=['GET', 'POST'])
