@@ -140,7 +140,7 @@
     <div id="popupOverlay" class="overlay-container">
         <div class="popup-box">
             
-            <div id="productDetails"></div><br>
+            <div id="productDetails" style="display: flex;"></div><br>
             <p id="amount"></p>
             <button class="btn-close-popup" onclick="togglePopup()">
                 Close
@@ -161,7 +161,7 @@
             productDetailsElement.innerHTML = order.order_items.map(item => `
                 <div class="product-details" style="padding: 10px">
                     <p>${item.product_name}</p>
-                    <img src="${item.image}" alt="${item.product_name}" style="width: 100%; height: auto; border-radius: 5px;">
+                    <img src="${item.image}" alt="${item.product_name}" style="hieght:100px; width: 100px;  border-radius: 5px;">
                     <p>Quantity: ${item.quantity}</p>
                     <p>Price: ₹${item.total}</p>
                     

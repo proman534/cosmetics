@@ -14,7 +14,8 @@
             <!-- Display the order information -->
             <p><strong>Order Number:</strong> #{{ order.order_number }}</p>
             <p><strong>Items:</strong> {{ order_items|length }}</p>
-            <p><strong>Discount:</strong> {{ order.discount if order.discount else 'None' }}</p>
+            <p><strong>Discount:</strong> {{ products.discount if products.discount else 'None' }}</p>
+            <p><strong>Delivery Charges:</strong> ₹{{ order.delivery_charge }}</p>
             <p><strong>Total Price:</strong> ₹{{ order.total_amount }}</p>
         
             <!-- Display order items -->

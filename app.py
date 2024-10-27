@@ -6,6 +6,7 @@ from flask_migrate import Migrate
 from werkzeug.utils import secure_filename  
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
+from math import radians, sin, cos, sqrt, atan2
 import pandas as pd
 import os
 import random
@@ -52,6 +53,8 @@ class User(db.Model):
     phone = db.Column(db.String(15), nullable=False)
     gender = db.Column(db.String(10))  # New gender column
     user_type = db.Column(db.String(10), default='user')
+    latitude = db.Column(db.Float, nullable=True)  # Add this line
+    longitude = db.Column(db.Float, nullable=True)
 
     orders = db.relationship('Order', back_populates='user', lazy=True)
     addresses = db.relationship('Address', backref='user', lazy=True)
@@ -115,6 +118,7 @@ class OrderItem(db.Model):
 
 
 
+
 # Order Model
 class Order(db.Model):
     __tablename__ = 'orders'
@@ -123,6 +127,7 @@ class Order(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Use 'user.id'
     address_id = db.Column(db.Integer, db.ForeignKey('addresses.id'), nullable=True)
     total_amount = db.Column(db.Float, nullable=False)
+    delivery_charge = db.Column(db.Float, nullable=True)  # New delivery_charge field
     delivery_date = db.Column(db.DateTime, nullable=False)
     placed_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
@@ -130,10 +135,11 @@ class Order(db.Model):
     user = db.relationship('User', back_populates='orders')  # Ensure it matches with the User model
     address = db.relationship('Address', backref='orders', lazy=True)
 
-    def __init__(self, order_number, user_id, total_amount, delivery_date, address_id=None):
+    def __init__(self, order_number, user_id, total_amount, delivery_charge, delivery_date, address_id=None):
         self.order_number = order_number
         self.user_id = user_id
         self.total_amount = total_amount
+        self.delivery_charge = delivery_charge  # Initialize the delivery_charge
         self.delivery_date = delivery_date
         self.address_id = address_id
 
@@ -153,9 +159,12 @@ class Address(db.Model):
 
 class CompanyDetails(db.Model):
     __tablename__ = 'company_details'
-    company_name = db.Column(db.String(255), primary_key=True)
-    category = db.Column(db.String(100))
-    image = db.Column(db.String(255))
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    company_name = db.Column(db.String(100), nullable=False, unique=True)
+    category = db.Column(db.String(50), nullable=False)
+    image = db.Column(db.String(100), nullable=True)
+
 
 # Utility function to get cart item count
 def get_cart_item_count():
@@ -202,20 +211,31 @@ def profile():
 def add_product():
     if session.get('user_type') != "admin":
         return redirect(url_for('login'))
-    if request.method == 'GET' and 'category' in request.args:
-        category = request.args.get('category')
-        companies = [
-            row[0] for row in db.session.query(CompanyDetails.company_name)
-            .filter(CompanyDetails.category == category).distinct().all()
-        ]
-        return jsonify(companies)
+
+    if request.method == 'GET':
+        if 'category' in request.args:
+            category = request.args.get('category')
+            companies = [
+                row[0] for row in db.session.query(CompanyDetails.company_name)
+                .filter(CompanyDetails.category == category).distinct().all()
+            ]
+            return jsonify(companies)
+
+        # Fetch all products to display in the table
+        products = db.session.query(Product).all()
+        categories = [row[0] for row in db.session.query(CompanyDetails.category).distinct().all()]
+        companies = [row[0] for row in db.session.query(CompanyDetails.company_name).distinct().all()]
+        return render_with_cart('add_product.html', categories=categories, products=products,  companies=companies)
+
+
     if request.method == 'POST':
+        product_id = request.form.get('product_id')  # Get the product ID for editing
         name = request.form['name']
         description = request.form['description']
         price = float(request.form['price'])
         discount = float(request.form['discount'])
         category = request.form['category']
-        company  = request.form['company']
+        company = request.form['company']
         stock = int(request.form['stock'])
         hsn_sac = int(request.form['hsn_sac'])
         image = request.files['image']
@@ -225,20 +245,49 @@ def add_product():
             image_filename = secure_filename(image.filename)
             image.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
 
-        new_product = Product(name=name, description=description, price=price, discount=discount, category=category, company=company, stock=stock, hsn_sac=hsn_sac, image=image_filename)
-        try:
-            db.session.add(new_product)
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Error adding product: {str(e)}', 'danger')
-        return redirect(url_for('add-product'))
-    categories = [row[0] for row in db.session.query(CompanyDetails.category).distinct().all()]
-    return render_with_cart('add_product.html', categories=categories)
+        if product_id:  # If product_id exists, update the existing product
+            existing_product = db.session.query(Product).filter(Product.id == product_id).first()
+            if existing_product:
+                existing_product.name = name
+                existing_product.description = description
+                existing_product.price = price
+                existing_product.discount = discount
+                existing_product.category = category
+                existing_product.company = company
+                existing_product.stock = stock
+                existing_product.hsn_sac = hsn_sac
+                existing_product.image = image_filename
+                flash('Product updated successfully!', 'success')
+        else:  # If product_id does not exist, add a new product
+            new_product = Product(name=name, description=description, price=price, discount=discount, category=category, company=company, stock=stock, hsn_sac=hsn_sac, image=image_filename)
+            try:
+                db.session.add(new_product)
+                flash('Product added successfully!', 'success')
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error adding product: {str(e)}', 'danger')
 
-from flask import request, redirect, url_for, flash
-from werkzeug.utils import secure_filename
-import os
+        db.session.commit()
+        return redirect(url_for('add_product'))
+
+    return redirect(url_for('add_product'))  # Fallback in case of unexpected methods
+
+@app.route('/delete-product/<int:product_id>', methods=['POST'])
+def delete_product(product_id):
+    if session.get('user_type') != "admin":
+        return redirect(url_for('login'))
+
+    product = db.session.query(Product).filter(Product.id == product_id).first()
+    if product:
+        db.session.delete(product)
+        db.session.commit()
+        flash('Product deleted successfully!', 'success')
+    else:
+        flash('Product not found!', 'danger')
+
+    return redirect(url_for('add_product'))
+
+
 
 @app.route('/add-company', methods=['GET', 'POST'])
 def add_company():
@@ -246,36 +295,69 @@ def add_company():
         return redirect(url_for('login'))
 
     if request.method == 'POST':
+        company_id = request.form.get('company_id')  # Handle editing case
         name = request.form['name']
         category = request.form['category']
-        image = request.files['image']
+        image = request.files.get('image')  # Use .get() to avoid KeyError
 
-        # Set the upload folder path
-        upload_folder = os.path.join(app.config['UPLOAD_FOLDER'], 'images')
-        
-        # Ensure the upload directory exists
-        os.makedirs(upload_folder, exist_ok=True)
+        # Initialize the filename to None or retain the old image on edit
+        image_filename = None
 
-        # Save the uploaded image
-        if image:
+        if image and image.filename != '':
+            # Secure the filename and save it to the upload folder
             image_filename = secure_filename(image.filename)
-            image_path = os.path.join(upload_folder, image_filename)
-            image.save(image_path)
+            upload_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
+            image.save(upload_path)
 
+        # Create a new company or update an existing one
+        if company_id:
+            company = CompanyDetails.query.get(company_id)
+            if company:
+                company.company_name = name
+                company.category = category
+                if image_filename:
+                    company.image = image_filename  # Update the image only if a new one is uploaded
+        else:
             # Create a new company record
-            new_company = CompanyDetails(company_name=name, category=category, image=image_filename)
-            try:
-                db.session.add(new_company)
-                db.session.commit()
-                flash('Company added successfully!', 'success')
-            except Exception as e:
-                db.session.rollback()
-                flash(f'Error adding company: {str(e)}', 'danger')
-                return redirect(url_for('add_company'))
+            company = CompanyDetails(
+                company_name=name, 
+                category=category, 
+                image=image_filename
+            )
+            db.session.add(company)
 
-        return redirect(url_for('add_company')) 
+        try:
+            db.session.commit()
+            flash('Company saved successfully!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error saving company: {str(e)}', 'danger')
 
-    return render_template('add_company.html')  # Render the form if GET request
+        return redirect(url_for('add_company'))
+
+    # Render the form with existing companies
+    companies = CompanyDetails.query.all()
+    return render_template('add_company.html', companies=companies)
+
+@app.route('/delete-company/<int:company_id>', methods=['POST'])
+def delete_company(company_id):
+    if session.get('user_type') != "admin":
+        return redirect(url_for('login'))
+
+    company = CompanyDetails.query.get(company_id)
+    if company:
+        try:
+            db.session.delete(company)
+            db.session.commit()
+            flash('Company deleted successfully!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error deleting company: {str(e)}', 'danger')
+    else:
+        flash('Company not found!', 'warning')
+
+    return redirect(url_for('add_company'))
+
 
 
 # Route for Shop
@@ -336,7 +418,7 @@ def cart():
     session_id = get_session_id()
 
     if user_id:
-        # Retrieve cart items for logged-in user
+        # Retrieve cart items for logged-in use
         cart_items = CartItem.query.filter_by(user_id=user_id).all()
     else:
         # Retrieve cart items for guest user
@@ -558,7 +640,7 @@ def search():
 
 
 @app.route('/place_order', methods=['GET', 'POST'])
-def place_order():
+def place_order(): 
     # Helper: Validate form input
     def validate_user_form(username, email, phone):
         if not all([username, email, phone]):
@@ -568,15 +650,27 @@ def place_order():
 
     # Check if the user is already logged in
     user_id = session.get('user_id')
+    user = User.query.get(user_id)
     if user_id:
         # If user is logged in, retrieve cart items
+        if not user.latitude or not user.longitude:
+            flash('Please allow location access to proceed with the order.', 'warning')
+            return redirect(url_for('cart'))
+
+
+        # Calculate distance from user to the mart
+        distance = calculate_distance(user.latitude, user.longitude)
+        print(f"{distance:.2f}, km")
+        delivery_charge = calculate_delivery_charge(distance)
         cart_items = CartItem.query.filter_by(user_id=user_id).all()
         if not cart_items:
             flash('Your cart is empty.', 'info')
             return redirect(url_for('cart'))
 
         # Calculate total amount and generate order details
-        total_amount = sum(item.total for item in cart_items)
+        total_amount = sum(item.total for item in cart_items)  + delivery_charge
+
+
         delivery_date = datetime.now() + timedelta(days=5)
         order_number = generate_unique_order_number()
 
@@ -585,7 +679,8 @@ def place_order():
             order_number=order_number,
             user_id=user_id,
             total_amount=total_amount,
-            delivery_date=delivery_date
+            delivery_date=delivery_date,
+            delivery_charge = delivery_charge
         )
 
         try:
@@ -606,7 +701,8 @@ def place_order():
                 db.session.add(order_item)
 
             db.session.commit()  # Commit the changes
-
+            clear_cart()
+            
             flash('Order placed successfully!', 'success')
             return redirect(url_for('order_confirmation'))
 
@@ -672,6 +768,7 @@ def order_confirmation():
     addresses = Address.query.filter_by(user_id=user_id).all()
     order = Order.query.filter_by(user_id=user_id).order_by(Order.id.desc()).first()
     order_items = order.order_items if order else []
+    products = Product.query.all()
 
     if request.method == 'POST':
         selected_address_id = request.form.get('address_id')
@@ -719,7 +816,7 @@ def order_confirmation():
                 flash("No active order found. Please place an order before confirming.", "danger")
                 return redirect(url_for('cart'))
 
-    return render_with_cart('order_confirmation.html', addresses=addresses, user=user, order=order, order_items=order_items)
+    return render_with_cart('order_confirmation.html', addresses=addresses, user=user, order=order, order_items=order_items, products=products)
 
 @app.route('/order_success/<order_number>')
 def order_success(order_number):
@@ -763,15 +860,91 @@ def checkout():
     user = session.get('user')
     user_id = session.get('user_id')
     session_id = get_session_id()
+    
     if user_id:
         # Retrieve cart items for logged-in user
         cart_items = CartItem.query.filter_by(user_id=user_id).all()
+        
+        # Get user's latitude and longitude
+        user_1 = User.query.get(user_id)
+        user_latitude = user_1.latitude
+        user_longitude = user_1.longitude
     else:
         # Retrieve cart items for guest user
         cart_items = CartItem.query.filter_by(session_id=session_id).all()
+        user_latitude = None
+        user_longitude = None
+
+    # Check if cart is empty
+    if not cart_items:
+        flash('Your cart is empty. Please add items to your cart before proceeding to checkout.', 'info')
+        return redirect(url_for('shop'))  # Redirect to your shopping page
+
+    # Calculate the total amount for items in the cart
     total_amount = sum(item.total for item in cart_items)
-    user = session.get('user')
-    return render_with_cart('checkout.html', cart_items=cart_items, total_amount=total_amount, user=user)
+
+    # Calculate delivery charge if the user has a location
+    if user_latitude is not None and user_longitude is not None:
+                
+        # Calculate distance from user to the mart
+        distance = calculate_distance(user_latitude, user_longitude)
+        delivery_charge = calculate_delivery_charge(distance)
+    else:
+        delivery_charge = 50  # Default delivery charge if no location is available
+
+    # Pass the total amount excluding delivery charge for display
+    return render_with_cart(
+        'checkout.html', 
+        cart_items=cart_items, 
+        total_amount=total_amount,  # Total amount excludes delivery charge for display
+        user=user,
+        delivery_charge=delivery_charge  # Pass delivery charge to the template
+    )
+
+@app.route('/update_location', methods=['POST'])
+def update_location():
+    data = request.get_json()
+    user_id = session.get('user_id')
+    latitude = data.get('latitude')
+    longitude = data.get('longitude')
+
+    if user_id and latitude is not None and longitude is not None:
+        user = User.query.get(user_id)
+        if user:
+            print(f"Updating location for user {user_id}: {latitude}, {longitude}")  # Debugging log
+            user.latitude = latitude
+            user.longitude = longitude
+            db.session.commit()  # Commit the changes
+            print(f"Updated location for user {user_id}: {user.latitude}, {user.longitude}")  # Debug log
+            return jsonify({'success': True})
+    print(f"Failed to update location: user_id={user_id}, latitude={latitude}, longitude={longitude}")  # Debug log
+    return jsonify({'success': False}), 400
+
+def calculate_distance(lat2, lon2):
+    """Calculate the distance between two points (latitude, longitude) using the Haversine formula."""
+    R = 6371.0  # Radius of the Earth in kilometers
+    lat1 = 17.437394
+    lon1 = 78.433707
+    lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
+
+    # Differences in coordinates
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+
+    # Haversine formula
+    a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    distance = R * c  # Distance in kilometers
+    return distance
+
+def calculate_delivery_charge(distance):
+    """Calculate the delivery charge based on the distance."""
+    if distance <= 5:
+        return 50  # Fixed rate for distances up to 5 km
+    elif distance <= 20:
+        return 75  # Fixed rate for distances between 5 km and 20 km
+    else:
+        return round(125 + (distance - 20) * 10, 2)  # Round to two decimal places
 
 @app.route('/update_cart/<int:item_id>', methods=['POST'])
 def update_cart(item_id):

@@ -573,7 +573,7 @@ footer {
 
 /* Add Product Form Styles */
 .add-product {
-    max-width: 500px; /* Maximum width for the form */
+    max-width: 1000px; /* Maximum width for the form */
     margin: 40px auto; /* Center the form */
     padding: 30px; /* Internal padding */
     background: #ffffff; /* White background for the form */
@@ -622,7 +622,7 @@ footer {
 .add-product button {
     width: 100%; /* Full width for the button */
     padding: 12px; /* Spacing inside button */
-    background: #db7093; /* Pink background for the button */
+    /*sbackground: #db7093;  Pink background for the button */
     color: white; /* White text */
     border: none; /* No border */
     border-radius: 8px; /* Rounded corners for the button */
