@@ -1,55 +1,136 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cosmetics Website - Add Product</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-</head>
-<body>
+{% extends "admin_base.html" %}
 
-    <!-- Header Section -->
-    <header>
-        <div class="logo">LOGO</div>
-        <nav>
-            <ul>
-                <li><a href="{{ url_for('add_product') }}">Add Product</a></li>
-                <li><a href="{{ url_for('admin')}}">Hello Admin!</a></li>
-                <li><a href="{{ url_for('logout') }}">Logout</a></li>
-            </ul>
-        </nav>
-    </header>
+{% block title %}Add Product - Cosmetics Website{% endblock %}
 
-    <!-- Add Product Section -->
-    <section class="add-product neumorphic">
+{% block content %}
+<section class="add-product neumorphic">
+    <div class="form-toggle">
+        <button id="uploadFileBtn" class="toggle-button small-button">Upload File</button>
+        <button id="manualAddBtn" class="toggle-button small-button" style="display: block;">Add Product</button> <!-- Initially hidden -->
+    </div>
+
+    <!-- Upload File Form -->
+    <form id="uploadForm" action="{{ url_for('upload_products') }}" method="POST" enctype="multipart/form-data" style="display: none;">
+        <h2>Upload Product Details</h2>
+        <label for="excelFile">Upload Excel File:</label>
+        <input type="file" id="excelFile" name="excel_file" accept=".xlsx, .xls, .csv" required>
+        <button type="submit" class="button">Upload</button>
+    </form>
+
+    <!-- Add Product Manually Form -->
+    <form id="manualForm" action="{{ url_for('add_product') }}" method="POST" enctype="multipart/form-data" style="display: block;"> <!-- Initially visible -->
         <h2>Add New Product</h2>
-        <form action="{{ url_for('add_product') }}" method="POST" enctype="multipart/form-data">
-            <label for="name">Product Name:</label>
-            <input type="text" id="name" name="name" required>
+        <label for="name">Product Name:</label>
+        <input type="text" id="name" name="name" required>
 
-            <label for="description">Description:</label>
-            <input type="text" id="description" name="description" required>
+        <label for="description">Description:</label>
+        <input type="text" id="description" name="description" required>
 
-            <label for="price">Price:</label>
-            <input type="number" step="0.01" id="price" name="price" required>
+        <label for="price">Price:</label>
+        <input type="number" step="0.01" id="price" name="price" required>
 
-            <label for="category">Category:</label>
-            <input type="text" id="category" name="category" required>
+        <label for="discount">Discount:</label>
+        <input type="number" step="0.01" id="discount" name="discount" required>
 
-            <label for="stock">Stock:</label>
-            <input type="number" step="1" id="stock" name="stock" required>
+        <label for="category">Category:</label>
+        <select id="category" name="category" required>
+            <option value="" disabled selected>Select Category</option>
+            {% for category in categories %}
+                <option value="{{ category }}">{{ category }}</option>
+            {% endfor %}
+        </select>
 
-            <label for="image">Image:</label>
-            <input type="file" id="image" name="image" accept="image/*" required>
+        <label for="company">Company:</label>
+        <select id="company" name="company" required>
+            <option value="" disabled selected>Select Company</option>
+        </select>
 
-            <button type="submit" class="button">Add Product</button>
-        </form>
-    </section>
+        <label for="stock">Stock:</label>
+        <input type="number" step="1" id="stock" name="stock" required>
 
-    <!-- Footer Section -->
-    <footer>
-        <p>© 2024 Cosmetics Website | Terms | Privacy | Contact</p>
-    </footer>
+        <label for="hsn_sac">HSN/SAC:</label>
+        <input type="number" id="hsn_sac" name="hsn_sac" required>
 
-</body>
-</html>
+        <label for="image">Image:</label>
+        <input type="file" id="image" name="image" accept="image/*" required>
+
+        <button type="submit" class="button">Add Product</button>
+    </form>
+</section>
+
+<script>
+    // Get references to the buttons and forms
+    const uploadFileBtn = document.getElementById('uploadFileBtn');
+    const manualAddBtn = document.getElementById('manualAddBtn');
+    const uploadForm = document.getElementById('uploadForm');
+    const manualForm = document.getElementById('manualForm');
+    const categorySelect = document.getElementById('category');
+    const companySelect = document.getElementById('company');
+
+    // Event listener to show Upload Form and hide Manual Form
+    uploadFileBtn.addEventListener('click', () => {
+        uploadForm.style.display = 'block'; // Show the upload form
+        manualForm.style.display = 'none'; // Hide the manual form
+        manualAddBtn.style.display = 'block'; // Hide the button
+    });
+
+    // Event listener to show Manual Form and hide Upload Form
+    manualAddBtn.addEventListener('click', () => {
+        manualForm.style.display = 'block'; // Show manual form
+        uploadForm.style.display = 'none'; // Hide upload form
+    });
+
+    // Fetch companies based on selected category
+    categorySelect.addEventListener('change', function () {
+        const category = this.value;
+
+        // Reset company select with loading message
+        companySelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
+
+        // Fetch companies from the server
+        fetch(`/add-product?category=${category}`)
+            .then(response => response.json())
+            .then(companies => {
+                companySelect.innerHTML = '<option value="" disabled selected>Select Company</option>';
+                companies.forEach(company => {
+                    const option = document.createElement('option');
+                    option.value = company;
+                    option.textContent = company;
+                    companySelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching companies:', error);
+                companySelect.innerHTML = '<option value="" disabled>No companies available</option>';
+            });
+    });
+</script>
+
+<style>
+    .form-toggle {
+        display: flex; /* Use flexbox to align buttons side by side */
+        justify-content: center; /* Center the buttons horizontally */
+        margin-bottom: 20px; /* Space below the button section */
+    }
+
+    .toggle-button {
+        padding: 8px 12px; /* Reduce padding for smaller buttons */
+        margin: 0 5px; /* Space between buttons */
+        font-size: 14px; /* Smaller font size */
+        border: none; /* Remove default border */
+        border-radius: 6px; /* Rounded corners */
+        background-color: #db7093; /* Button background color */
+        color: white; /* Button text color */
+        cursor: pointer; /* Pointer cursor on hover */
+        transition: background-color 0.3s; /* Smooth transition for hover */
+    }
+
+    .toggle-button:hover {
+        background-color: #c95a8e; /* Darker pink on hover */
+    }
+
+    .toggle-button:active {
+        transform: translateY(1px); /* Slight press effect on click */
+    }
+</style>
+{% endblock %}

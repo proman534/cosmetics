@@ -52,10 +52,10 @@ body::before {
 
 .wrapper .form-box {
     position: absolute;
-    top: 0;
+    top: 8%;
     width: 50%;
     height: 100%;
-    display: flex;
+    display: table;
     justify-content: center;
     flex-direction: column;
 }

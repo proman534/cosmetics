@@ -17,13 +17,14 @@
         <nav>
             <ul>
                 <li><a href="{{ url_for('add_product') }}">Add Product</a></li>
+                <li><a href="{{ url_for('add_company') }}">Add Company</a></li>
                 <li><a href="{{ url_for('admin_orders') }}">Orders</a></li>
                 <li><a href="{{ url_for('admin') }}">Hello Admin!</a></li>
                 <li><a href="{{ url_for('logout') }}">Logout</a></li>
             </ul>
         </nav>        
     </header>
-
+    <div id="flash-messages" data-messages="{{ get_flashed_messages(with_categories=True) | tojson }}"></div>
     <!-- Main Content Section -->
     <main>
         {% block content %}{% endblock %}
@@ -33,6 +34,13 @@
     <footer>
         <p>© 2024 Cosmetics Website | Terms | Privacy | Contact</p>
     </footer>
-
+    <script>
+        window.onload = function() {
+            const messages = JSON.parse(document.getElementById('flash-messages').dataset.messages);
+            messages.forEach(([category, message]) => {
+                showFlashMessage(message);
+            });
+        };
+    </script>
 </body>
 </html>

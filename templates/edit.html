@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Profile - Cosmetics Website{% endblock %}
+
+{% block content %}
+<section class="edit-profile-section">
+    <div class="edit-profile-container">
+        <h2>Edit Your Profile</h2>
+
+        <form method="POST" action="{{ url_for('save_changes') }}">
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" id="username" name="username" value="{{ user_d.username }}" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" value="{{ user_d.email }}" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone:</label>
+                <input type="text" id="phone" name="phone" value="{{ user_d.phone }}" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="gender">Gender:</label>
+                <select id="gender" name="gender" class="form-control">
+                    <option value="Male" {% if user_d.gender == "Male" %}selected{% endif %}>Male</option>
+                    <option value="Female" {% if user_d.gender == "Female" %}selected{% endif %}>Female</option>
+                    <option value="Other" {% if user_d.gender == "Others" %}selected{% endif %}>Others</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="location">Address:</label>
+                <div style="padding: 20px; display: flex; flex-direction: column; gap: 15px;">
+                    {% for address in addresses %}
+                    <div class="address-entry">
+                        <label for="line">Line: <input type="text" id="line" name="line" value="{{ address.address_line }}" class="address-control"></label>
+                        <label for="city">City: <input type="text" id="city" name="city" value="{{ address.city }}" class="address-control"></label>
+                        <label for="state">State: <input type="text" id="state" name="state" value="{{ address.state }}" class="address-control"></label>
+                        <label for="postal_code">Postal Code: <input type="text" id="postal_code" name="postal_code" value="{{ address.postal_code }}" class="address-control"></label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <a href="{{ url_for('profile') }}" class="btn btn-secondary">Cancel</a>
+        </form>
+    </div>
+</section>
+
+<style>
+    .edit-profile-section {
+        padding: 40px;
+        /* background-color: #f9f9f9; */
+        background: linear-gradient(145deg, #f6cedb, #fff);
+    }
+
+    .edit-profile-container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: #fff;
+        padding: 20px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+    }
+
+    .edit-profile-container h2 {
+        text-align: center;
+        margin-bottom: 20px;
+        color: #db7093;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+    }
+
+    .btn {
+        padding: 10px 20px;
+        border-radius: 5px;
+        text-align: center;
+        text-decoration: none;
+        transition: background-color 0.3s ease;
+        color: #fff;
+    }
+
+    .btn-primary {
+        background-color: #db7093;
+    }
+
+    .btn-secondary {
+        background-color: #6c757d;
+    }
+
+    .btn-primary:hover {
+        background-color: #db7093;
+    }
+
+    .btn-secondary:hover {
+        background-color: #5a6268;
+    }
+    
+    form{
+        padding: 20px;
+    }
+    .address-entry {
+    padding: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    }
+
+    .address-entry label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+    }
+
+    .address-control {
+        width: calc(100% - 20px);  /* Account for padding */
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        margin-bottom: 10px;  /* Space between fields */
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .address-control:focus {
+        border-color: #db7093;  /* Change border color on focus */
+        outline: none;  /* Remove default outline */
+        box-shadow: 0 0 5px rgba(219, 112, 147, 0.5);  /* Subtle glow effect */
+    }
+</style>
+{% endblock %}

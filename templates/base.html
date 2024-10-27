@@ -76,7 +76,7 @@
         </nav>
     </header>
 
-
+    <div id="flash-messages" data-messages="{{ get_flashed_messages(with_categories=True) | tojson }}"></div>
     <!-- Main Content Section -->
     <section class="main-content">
         {% block content %}{% endblock %}
@@ -92,6 +92,13 @@
     <footer>
         <p>© 2024 Cosmetics Website | Terms | Privacy | Contact</p>
     </footer>
-
+    <script>
+        window.onload = function() {
+            const messages = JSON.parse(document.getElementById('flash-messages').dataset.messages);
+            messages.forEach(([category, message]) => {
+                showFlashMessage(message);
+            });
+        };
+    </script>
 </body>
 </html>

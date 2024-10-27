@@ -351,6 +351,72 @@ footer {
     transform: translateY(-5px);
 }
 
+/* Companies Section */
+.companies, .best-sellers {
+    padding: 20px;
+}
+
+.companies h2, .best-sellers h2 {
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #db7093;
+}
+
+.company-grid, .product-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Creates 3 equal columns */
+    gap: 20px; /* Spacing between items */
+    justify-items: center; /* Centers the content within each grid item */
+}
+
+/* Company and Product Neumorphic Cards */
+.company-item, .product-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%; /* Adjust width as needed */
+    max-width: 500px; /* Set a maximum width for the product item */
+    padding: 15px; /* Adjust padding */
+    background-color: #f8f5f2;
+    border-radius: 15px;
+    box-shadow: 5px 5px 15px #c1b9b2, -5px -5px 15px #ffffff;
+    transition: transform 0.3s ease;
+    margin: 10px 0; /* Adjust vertical spacing between items */
+    text-align: center; /* Center text for product details */
+    text-decoration: none;
+}
+
+.company-item img, .product-item img {
+    max-width: 100%; /* Ensure image fits within the container */
+    height: 200px;
+    margin-top: 15px; /* Adds space between the product details and the image */
+    border-radius: 10px;
+    display: block;
+}
+
+.company-item:hover, .product-item:hover {
+    transform: translateY(-5px);
+    background-color: #f6cedb;
+}
+
+/* Styles for company item span */
+.company-item span {
+    display: block; /* Makes the span take full width */
+    text-align: center; /* Center aligns the text */
+    margin-top: 10px; /* Adds space between the image and the text */
+    font-size: 32px; /* Adjusts font size */
+    color: #db7093; /* Sets the text color to match the brand color */
+    font-weight: bold; /* Makes the text bold */
+    transition: color 0.3s; /* Adds a transition effect for hover */
+}
+
+
+/* Hover effect for category item span */
+.company-item:hover span {
+    color: #c76385; /* Changes color on hover */
+}
+
 /* Contact Section */
 .contact {
     padding: 40px;
@@ -574,6 +640,31 @@ footer {
     transform: translateY(0); /* Reset lift effect on click */
 }
 
+.add-product select {
+    width: 100%; /* Full width to match inputs */
+    padding: 12px; /* Same padding as inputs */
+    margin-bottom: 20px; /* Space below each select */
+    border: 1px solid #ddd; /* Light border to match inputs */
+    border-radius: 8px; /* Rounded corners */
+    font-size: 16px; /* Font size to match inputs */
+    background-color: #fff; /* White background */
+    transition: border-color 0.3s, box-shadow 0.3s; /* Smooth transition */
+    cursor: pointer; /* Pointer cursor for dropdowns */
+}
+
+/* Focus state matches input focus styling */
+.add-product select:focus {
+    border-color: #db7093; /* Pink border on focus */
+    box-shadow: 0 0 5px rgba(219, 112, 147, 0.5); /* Light pink shadow on focus */
+    outline: none; /* Remove default outline */
+}
+
+/* Optional: Style for dropdown options */
+.add-product select option {
+    background-color: #fff; /* White background for options */
+    color: #333; /* Dark text for readability */
+}
+
 /* Responsive Styles */
 @media (max-width: 600px) {
     .add-product {
@@ -590,7 +681,7 @@ footer {
 
 /* Orders Page Container */
 .orders-container {
-    max-width: 900px;
+    max-width: 1200px;
     margin: 50px auto;
     padding: 30px;
     border-radius: 10px;
@@ -606,6 +697,15 @@ footer {
 }
 
 /* Orders Table Styling */
+.container{
+    max-width: 1200px;
+    margin: 50px auto;
+    padding: 30px;
+    border-radius: 10px;
+    background-color: #ffffff;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
 .order-table {
     width: 100%;
     border-collapse: collapse;

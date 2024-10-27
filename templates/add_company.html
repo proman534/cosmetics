@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cosmetics Website - Add Company</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        /* Flexbox styles to align label and dropdown */
+        .form-group {
+            display: flex;
+            align-items: center; /* Center the items vertically */
+            margin-bottom: 15px; /* Space below each group */
+        }
+
+        .form-group label {
+            margin-right: 10px; /* Space between label and dropdown */
+            width: 150px; /* Fixed width for the label */
+        }
+
+        .form-group select {
+            flex-grow: 1; /* Allow select to take remaining width */
+            padding: 5px; /* Add some padding for aesthetics */
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Section -->
+    <header>
+        <div class="logo">LOGO</div>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('add_product') }}">Add Product</a></li>
+                <li><a href="{{ url_for('add_company') }}">Add Company</a></li>
+                <li><a href="{{ url_for('admin_orders') }}">Orders</a></li>
+                <li><a href="{{ url_for('admin')}}">Hello Admin!</a></li>
+                <li><a href="{{ url_for('logout') }}">Logout</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Add Company Section -->
+    <section class="add-product neumorphic">
+        <h2>Add New Company</h2>
+        <form action="{{ url_for('add_company') }}" method="POST" enctype="multipart/form-data">
+            <label for="name">Company Name:</label>
+            <input type="text" id="name" name="name" required>
+    
+            <label for="category">Category:</label>
+            <select id="category" name="category" required>
+                <option value="" disabled selected>Select a category</option>
+                <option value="Skincare">Skincare</option>
+                <option value="Makeup">Makeup</option>
+                <option value="Hair Care">Hair Care</option>
+                <option value="Fragrances">Fragrances</option>
+                <option value="Body Care">Body Care</option>
+                <option value="Tools & Brushes">Tools & Brushes</option>
+            </select>
+        
+            
+    
+            <label for="image">Company Logo:</label>
+            <input type="file" id="image" name="image" accept="image/*" required>
+    
+            <button type="submit" class="button">Add Company</button>
+        </form>
+    </section>
+    
+    <!-- Footer Section -->
+    <footer>
+        <p>© 2024 Cosmetics Website | Terms | Privacy | Contact</p>
+    </footer>
+
+</body>
+</html>
