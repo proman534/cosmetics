@@ -7,6 +7,8 @@ from werkzeug.utils import secure_filename
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
 from math import radians, sin, cos, sqrt, atan2
+from opencage.geocoder import OpenCageGeocode
+import requests
 import pandas as pd
 import os
 import random
@@ -14,10 +16,7 @@ import uuid
 import string
 import re
 from dotenv import load_dotenv
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
-from io import BytesIO
-from pdfrw import PdfReader, PdfWriter, PageMerge, PdfDict, PdfName
+
 
 # Load environment variables
 load_dotenv()
@@ -640,127 +639,113 @@ def search():
 
 
 @app.route('/place_order', methods=['GET', 'POST'])
-def place_order(): 
-    # Helper: Validate form input
-    def validate_user_form(username, email, phone):
-        if not all([username, email, phone]):
-            flash('Please fill in all fields.', 'warning')
-            return False
-        return True
-
-    # Check if the user is already logged in
+def place_order():
     user_id = session.get('user_id')
-    user = User.query.get(user_id)
-    if user_id:
-        # If user is logged in, retrieve cart items
-        if not user.latitude or not user.longitude:
-            flash('Please allow location access to proceed with the order.', 'warning')
-            return redirect(url_for('cart'))
 
+    if not user_id:  # User not logged in
+        flash('Please log in or create an account to place an order.', 'danger')
+        return redirect(url_for('user_details'))  # Redirect to user details form
 
-        # Calculate distance from user to the mart
-        distance = calculate_distance(user.latitude, user.longitude)
-        print(f"{distance:.2f}, km")
-        delivery_charge = calculate_delivery_charge(distance)
-        cart_items = CartItem.query.filter_by(user_id=user_id).all()
-        if not cart_items:
-            flash('Your cart is empty.', 'info')
-            return redirect(url_for('cart'))
+    user = User.query.get(user_id)  # Retrieve user after checking login
 
-        # Calculate total amount and generate order details
-        total_amount = sum(item.total for item in cart_items)  + delivery_charge
+    if not user.latitude or not user.longitude:  # Ensure location access
+        flash('Please allow location access to proceed with the order.', 'warning')
+        return redirect(url_for('cart'))
 
+    # Fetch cart items after login validation
+    cart_items = CartItem.query.filter_by(user_id=user_id).all()
+    if not cart_items:
+        flash('Your cart is empty. Please add items to proceed.', 'info')
+        return redirect(url_for('cart'))
 
-        delivery_date = datetime.now() + timedelta(days=5)
-        order_number = generate_unique_order_number()
+    # Calculate delivery distance and charges
+    distance = calculate_distance(user.latitude, user.longitude)
+    delivery_charge = calculate_delivery_charge(distance)
+    total_amount = sum(item.total for item in cart_items) + delivery_charge
 
-        # Create a new Order
-        new_order = Order(
-            order_number=order_number,
-            user_id=user_id,
-            total_amount=total_amount,
-            delivery_date=delivery_date,
-            delivery_charge = delivery_charge
-        )
+    order = Order(
+        order_number=generate_unique_order_number(),
+        user_id=user_id,
+        total_amount=total_amount,
+        delivery_date=datetime.now() + timedelta(days=5),
+        delivery_charge=delivery_charge,
+    )
 
-        try:
-            db.session.add(new_order)
-            db.session.flush()  # Flush to get the order ID
+    try:
+        db.session.add(order)
+        db.session.flush()
 
-            # Create OrderItems for each cart item
-            for cart_item in cart_items:
-                order_item = OrderItem(
-                    order_id=new_order.id,
-                    product_id=cart_item.product_id,
-                    product_name=cart_item.name,
-                    product_image=cart_item.image,
-                    quantity=cart_item.quantity,
-                    price=cart_item.price,
-                    total=cart_item.total
-                )
-                db.session.add(order_item)
+        # Add items to the order
+        for cart_item in cart_items:
+            order_item = OrderItem(
+                order_id=order.id,
+                product_id=cart_item.product_id,
+                product_name=cart_item.name,
+                product_image=cart_item.image,
+                quantity=cart_item.quantity,
+                price=cart_item.price,
+                total=cart_item.total,
+            )
+            db.session.add(order_item)
 
-            db.session.commit()  # Commit the changes
-            clear_cart()
-            
-            flash('Order placed successfully!', 'success')
-            return redirect(url_for('order_confirmation'))
+        db.session.commit()
+        clear_cart()  # Clear cart on successful order placement
 
-        except IntegrityError:
-            db.session.rollback()
-            flash('An error occurred while placing your order. Please try again.', 'danger')
-            return redirect(url_for('cart'))  # Fallback redirect in case of errors
+        flash('Order placed successfully!', 'success')
+        return redirect(url_for('order_confirmation'))
 
-    # If user is not logged in, handle user details form submission
+    except IntegrityError:
+        db.session.rollback()
+        flash('An error occurred. Please try again.', 'danger')
+        return redirect(url_for('cart'))
+
+@app.route('/user_details', methods=['GET', 'POST'])
+def user_details():
     if request.method == 'POST':
-        # Extract form data
         username = request.form.get('username')
         email = request.form.get('email')
         phone = request.form.get('phone')
 
-        # Validate form input
-        if not validate_user_form(username, email, phone):
+        if not all([username, email, phone]):
+            flash('Please fill in all fields.', 'warning')
             return render_template('user_details.html')
 
-        # Check if the user already exists by email
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
-            # Log in the existing user
-            session['user_id'] = existing_user.id
+            session['user_id'] = existing_user.id  # Log in existing user
             flash('Logged in successfully!', 'success')
             return redirect(url_for('place_order'))
 
-        # Create a new guest user
-        new_user = User(
-            username=username,
-            email=email,
-            phone=phone,
-            password=generate_password_hash('123456'),  # Default password
-            user_type='guest'
-        )
-
-        # Add new user to the database
         try:
+            new_user = User(
+                username=username,
+                email=email,
+                phone=phone,
+                password=generate_password_hash('123456'),
+                user_type='guest',
+            )
             db.session.add(new_user)
             db.session.commit()
-            session['user_id'] = new_user.id  # Log in the new user
+            session['user_id'] = new_user.id  # Log in new user
+
+            CartItem.query.filter_by(user_id=None).update({'user_id': new_user.id})
+            db.session.commit()
+
             flash('Account created successfully!', 'success')
             return redirect(url_for('place_order'))
+
         except IntegrityError:
             db.session.rollback()
-            flash('An account with this email already exists or an error occurred.', 'danger')
-            return render_template('user_details.html')
+            flash('An account with this email already exists.', 'danger')
 
-    # Render the user details form for new users
     return render_template('user_details.html')
+
 
 
 @app.route('/order_confirmation', methods=['GET', 'POST'])
 def order_confirmation():
-    user = session.get('user')
+    # Check if user is logged in
     user_id = session.get('user_id')
-
-    # Ensure user is logged in
     if not user_id:
         flash("Please log in to continue.", "danger")
         return redirect(url_for('login'))
@@ -772,9 +757,9 @@ def order_confirmation():
 
     if request.method == 'POST':
         selected_address_id = request.form.get('address_id')
-        add_new_address = request.form.get('add_new_address')  # This will be "true" or None
+        add_new_address = request.form.get('add_new_address')
 
-        # If a new address is to be added, collect the details
+        # Adding a new address if provided
         if add_new_address:
             new_address_line = request.form.get('new_address_line')
             new_city = request.form.get('new_city')
@@ -782,11 +767,11 @@ def order_confirmation():
             new_postal_code = request.form.get('new_postal_code')
             new_country = request.form.get('new_country')
 
-            if not new_address_line or not new_city or not new_state or not new_postal_code or not new_country:
+            if not all([new_address_line, new_city, new_state, new_postal_code, new_country]):
                 flash("Please provide all address details.", "danger")
                 return redirect(url_for('order_confirmation'))
 
-            # Add new address as secondary
+            # Add the new address to the database
             new_address = Address(
                 user_id=user_id,
                 address_line=new_address_line,
@@ -794,29 +779,62 @@ def order_confirmation():
                 state=new_state,
                 postal_code=new_postal_code,
                 country=new_country,
-                address_type='secondary'  # Set as secondary address
+                address_type='secondary'
             )
             db.session.add(new_address)
             db.session.commit()
-            selected_address_id = new_address.id  # Use the new address ID for the order
+            selected_address_id = new_address.id
 
-        # If a primary address is selected
-        if selected_address_id:
-            if order:  # Check if there is an existing order
-                order.address_id = selected_address_id
-                try:
-                    db.session.commit()
-                    clear_cart()  # Empty the cart after order confirmation
-                    flash("Order placed successfully!", "success")
-                    return redirect(url_for('order_success', order_number=order.order_number))
-                except IntegrityError:
-                    db.session.rollback()
-                    flash("An error occurred while confirming your order. Please try again.", "danger")
-            else:
-                flash("No active order found. Please place an order before confirming.", "danger")
-                return redirect(url_for('cart'))
+        if selected_address_id and order:
+            # Update the order with the new address
+            order.address_id = selected_address_id
 
-    return render_with_cart('order_confirmation.html', addresses=addresses, user=user, order=order, order_items=order_items, products=products)
+            # Get the selected address
+            address_entry = Address.query.get(selected_address_id)
+            full_address = f"{address_entry.address_line}, {address_entry.city}, {address_entry.state}"
+            print(full_address)
+
+            # Convert address to latitude and longitude
+            latitude, longitude = get_lat_lon_from_address(full_address)
+            print("this are what I want:", latitude, longitude)
+            if latitude is None or longitude is None:
+                flash("Unable to fetch the location for the selected address.", "danger")
+                return redirect(url_for('order_confirmation'))
+
+            # Update user location with the new coordinates
+            user = session.get(user_id)
+            if user:
+                user.latitude = latitude
+                user.longitude = longitude
+                db.session.commit()
+
+            # Calculate the delivery charge based on the new address
+            distance = calculate_distance(latitude, longitude)
+            print(distance)
+            delivery_charge = calculate_delivery_charge(distance)
+
+            # Update the order's delivery charge and total amount
+            order.delivery_charge = delivery_charge
+            order.total_amount += delivery_charge
+            try:
+                db.session.commit()
+                clear_cart()  # Clear cart on order confirmation
+                flash("Order placed successfully!", "success")
+                return redirect(url_for('order_success', order_number=order.order_number))
+            except IntegrityError:
+                db.session.rollback()
+                flash("An error occurred while placing the order. Please try again.", "danger")
+
+    # Back to cart action
+    if request.form.get('back_to_cart'):
+        if order:
+            # Delete the order and its items if back to cart is selected
+            OrderItem.query.filter_by(order_id=order.id).delete()
+            db.session.delete(order)
+            db.session.commit()
+        return redirect(url_for('cart'))
+
+    return render_with_cart('order_confirmation.html', addresses=addresses, order=order, order_items=order_items, products=products)
 
 @app.route('/order_success/<order_number>')
 def order_success(order_number):
@@ -827,7 +845,7 @@ def order_success(order_number):
     order_items = OrderItem.query.filter_by(order_id=order.id).all()  # Get related order items
     address = order.address
     user = session.get('user')  # Get the current user from the session
-
+    
     # Render the template with all the necessary data
     return render_template('order_success.html', order=order, address=address, order_items=order_items, user=user, cart_count=cart_count)
 
@@ -901,23 +919,17 @@ def checkout():
         delivery_charge=delivery_charge  # Pass delivery charge to the template
     )
 
-OPENCAGE_API_KEY = '52b7410b7e004496a84e41255d539076'
+
+key = '52b7410b7e004496a84e41255d539076'
+geocoder = OpenCageGeocode(key)
 
 def get_lat_lon_from_address(address):
     """Fetch latitude and longitude from OpenCage API for the given address."""
-    url = 'https://api.opencagedata.com/geocode/v1/json'
-    params = {
-        'q': address,
-        'key': OPENCAGE_API_KEY,
-        'limit': 1,
-    }
-    response = request.get(url, params=params)
-    data = response.json()
+    result = geocoder.geocode(address)
+    print(u'%f;%f' % (result[0]['geometry']['lat'],
+                        result[0]['geometry']['lng']))
+    return  result[0]['geometry']['lat'], result[0]['geometry']['lng']
 
-    if data['results']:
-        location = data['results'][0]['geometry']
-        return location['lat'], location['lng']
-    return None, None
 
 @app.route('/update_location', methods=['POST'])
 def update_location():
@@ -934,7 +946,7 @@ def update_location():
         return jsonify({'success': False, 'message': 'No address found for the user'}), 400
 
     # Assuming address_entry contains fields: street, city, state, and zip
-    full_address = f"{address_entry.street}, {address_entry.city}, {address_entry.state}, {address_entry.zip}"
+    full_address = f"{address_entry.address_line}, {address_entry.city}, {address_entry.state}, {address_entry.postal_code}"
 
     # Convert the address to latitude and longitude
     latitude, longitude = get_lat_lon_from_address(full_address)

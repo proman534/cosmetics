@@ -39,7 +39,7 @@
                 {% if addresses %}
                     <div class="form-group">
                         <label for="address_id">Delivery Address:</label>
-                        <select id="address_id" name="address_id" class="form-control" required>
+                        <select id="address_id" name="address_id" class="form-control">
                             <option value="">Select an existing address</option>
                             {% for address in addresses %}
                                 <option value="{{ address.id }}">
