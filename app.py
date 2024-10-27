@@ -827,7 +827,7 @@ def order_confirmation():
 
             # Update the order's delivery charge and total amount
             order.delivery_charge = delivery_charge
-            order.total_amount += delivery_charge
+            order.total_amount = order.total_amount
             try:
                 db.session.commit()
                 clear_cart()  # Clear cart on order confirmation
