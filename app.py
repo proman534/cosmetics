@@ -735,7 +735,6 @@ def place_order():
         flash('An error occurred while placing your order. Please try again.', 'danger')
         return redirect(url_for('cart'))  # Redirect to cart on failure
 
-    return render_template('user_details.html')
 
 @app.route('/order_confirmation', methods=['GET', 'POST'])
 def order_confirmation():
