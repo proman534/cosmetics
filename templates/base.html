@@ -43,6 +43,31 @@
             font-weight: bold;
             margin-left: 10px;
         }
+
+        /* Flash Message Styling */
+        .flash-message {
+            position: fixed;
+            top: 10px;
+            right: 20px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            margin-bottom: 10px;
+            z-index: 1000;
+            animation: fadeOut 5s forwards;
+        }
+
+        .flash-message.success { background-color: #4CAF50; }  /* Green */
+        .flash-message.warning { background-color: #FFC107; } /* Yellow */
+        .flash-message.danger { background-color: #F44336; }   /* Red */
+        .flash-message.info { background-color: #2196F3; }      /* Blue */
+
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            90% { opacity: 0.9; }
+            100% { opacity: 0; display: none; }
+        }
     </style>
 </head>
 <body>
@@ -76,7 +101,8 @@
         </nav>
     </header>
 
-    <div id="flash-messages" data-messages="{{ get_flashed_messages(with_categories=True) | tojson }}"></div>
+    <div id="flash-messages" data-messages="{{ get_flashed_messages(with_categories=True) | tojson | default('[]') }}"></div>
+
     <!-- Main Content Section -->
     <section class="main-content">
         {% block content %}{% endblock %}
@@ -92,13 +118,42 @@
     <footer>
         <p>© 2024 Cosmetics Website | Terms | Privacy | Contact</p>
     </footer>
+
+    <!-- Flash Messages Script -->
     <script>
-        window.onload = function() {
-            const messages = JSON.parse(document.getElementById('flash-messages').dataset.messages);
-            messages.forEach(([category, message]) => {
-                showFlashMessage(message);
-            });
+        window.onload = function () {
+            const flashMessagesElement = document.getElementById('flash-messages');
+            const messagesData = flashMessagesElement.dataset.messages;
+            console.log('Flash messages data:', messagesData);  // Debug log
+    
+            // Check if messagesData is a valid JSON string and not empty
+            if (messagesData && messagesData.trim() !== '[]') {
+                try {
+                    const messages = JSON.parse(messagesData);  // Parse the messages data
+                    messages.forEach(([category, message]) => {
+                        showFlashMessage(category, message);  // Show each flash message
+                    });
+                } catch (error) {
+                    console.error('Error parsing JSON:', error);  // Log the parsing error
+                    showFlashMessage('danger', 'An unexpected error occurred while loading messages.');
+                }
+            }
         };
+    
+        // Function to display flash messages
+        function showFlashMessage(category, message) {
+            const flashMessage = document.createElement('div');
+            flashMessage.className = `flash-message ${category}`;  // Assign class based on category
+            flashMessage.innerText = message;  // Set the message text
+    
+            // Append the flash message to the body
+            document.body.appendChild(flashMessage);
+    
+            // Automatically remove the message after 5 seconds
+            setTimeout(() => {
+                flashMessage.remove();
+            }, 5000);
+        }
     </script>
 </body>
 </html>

@@ -286,6 +286,10 @@ def delete_product(product_id):
 
     return redirect(url_for('add_product'))
 
+@app.route('/test_flash')
+def test_flash():
+    flash('This is a test message!', 'info')
+    return redirect(url_for('home'))
 
 
 @app.route('/add-company', methods=['GET', 'POST'])
@@ -419,13 +423,27 @@ def cart():
     if user_id:
         # Retrieve cart items for logged-in use
         cart_items = CartItem.query.filter_by(user_id=user_id).all()
+        cartstock = [
+        {
+            'item': item,
+            'stock': Product.query.get(item.product_id).stock
+        }
+        for item in cart_items
+    ]
+        flash('Items are in cart!','success')
     else:
         # Retrieve cart items for guest user
         cart_items = CartItem.query.filter_by(session_id=session_id).all()
-
+        cartstock = [
+        {
+            'item': item,
+            'stock': Product.query.get(item.product_id).stock
+        }
+        for item in cart_items
+        ]
     total_amount = sum(item.total for item in cart_items)
     user = session.get('user')
-    return render_with_cart('cart.html', cart_items=cart_items, total_amount=total_amount, user=user)
+    return render_with_cart('cart.html', cart_items=cart_items, total_amount=total_amount, user=user, cartstock=cartstock)
 
 
 # Route for removing an item from the cart
@@ -1004,15 +1022,27 @@ def update_cart(item_id):
             (CartItem.user_id == user_id) | (CartItem.session_id == session_id)
         ).first()
 
-        if cart_item:
-            # Update quantity and total price
-            cart_item.quantity = new_quantity
-            cart_item.total = cart_item.price * new_quantity
-
-            db.session.commit()
-            flash('Cart updated successfully!', 'success')
-        else:
+        if not cart_item:
             flash('Cart item not found.', 'danger')
+            return redirect(url_for('cart'))
+
+        # Retrieve the product's stock from the Product table
+        product = Product.query.get(cart_item.product_id)
+        if not product:
+            flash('Product not found.', 'danger')
+            return redirect(url_for('cart'))
+
+        # Validate new quantity against available stock
+        if new_quantity > product.stock:
+            flash(f'Only {product.stock} units available in stock.', 'warning')
+            return redirect(url_for('cart'))
+
+        # Update quantity and total price
+        cart_item.quantity = new_quantity
+        cart_item.total = cart_item.price * new_quantity
+
+        db.session.commit()
+        flash('Cart updated successfully!', 'success')
 
     except ValueError:
         flash('Invalid quantity. Please enter a valid number.', 'danger')
