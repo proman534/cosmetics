@@ -696,7 +696,10 @@ def place_order():
     delivery_charge = calculate_delivery_charge(distance)
 
     # Calculate the total amount including delivery charge
-    total_amount = sum(item['total'] for item in cart_items) + delivery_charge
+    if isinstance(cart_items[0], dict):  # If cart items are from session
+        total_amount = sum(item['total'] for item in cart_items) + delivery_charge
+    else:  # If cart items are from the database
+        total_amount = sum(item.total for item in cart_items) + delivery_charge 
 
     # Create a new order
     new_order = Order(
@@ -710,17 +713,16 @@ def place_order():
     try:
         db.session.add(new_order)
         db.session.flush()  # Get the order ID
-
         # Create order items from cart items
         for item in cart_items:
             order_item = OrderItem(
                 order_id=new_order.id,
-                product_id=item['product_id'],
-                product_name=item['name'],
-                product_image=item['image'],
-                quantity=item['quantity'],
-                price=item['price'],
-                total=item['total']
+                product_id=item['product_id'] if isinstance(item, dict) else item.product_id,
+                product_name=item['name'] if isinstance(item, dict) else item.name,
+                product_image=item['image'] if isinstance(item, dict) else item.image,
+                quantity=item['quantity'] if isinstance(item, dict) else item.quantity,
+                price=item['price'] if isinstance(item, dict) else item.price,
+                total=item['total'] if isinstance(item, dict) else item.total
             )
             db.session.add(order_item)
 
