@@ -1,0 +1,952 @@
+/* Base styling */
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Open+Sans:wght@400&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+    background-color: #f3eefc; /* Light lavender background */
+    color: #4B3F72; /* Dark lavender for text */
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Neumorphism effect */
+.neumorphic {
+    background: #f3eefc; /* Light lavender */
+    border-radius: 15px;
+    box-shadow: 5px 5px 15px #c8c2d8, /* Soft shadow */
+                -5px -5px 15px #ffffff; /* Light shadow for depth */
+    padding: 20px;
+    margin: 20px;
+}
+
+h1, h2, h3 {
+    font-family: 'Playfair Display', serif;
+    letter-spacing: 0.5px; /* Slightly increase letter spacing */
+}
+
+p {
+    font-size: 16px; /* Standard body text */
+    line-height: 1.5; /* Comfortable line height */
+    margin: 10px 0; /* Adds space between paragraphs */
+}
+
+h1 {
+    font-size: 36px; /* Large size for headings */
+    text-shadow: 1px 1px 2px rgba(75, 63, 114, 0.5); /* Subtle shadow */
+    color: #6B5B95; /* Dark lavender */
+}
+
+/* Header Section */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 25px;
+    background-color: #f3eefc; /* Light lavender */
+    box-shadow: inset 5px 5px 15px #c8c2d8, 
+                inset -5px -5px 15px #ffffff; /* Inner shadow */
+}
+
+.logo {
+    font-size: 24px;
+    font-weight: bold;
+    color: #4B3F72; /* Darker lavender */
+}
+
+nav {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    gap: 15px; /* Adjust gap for spacing */
+}
+
+nav ul li {
+    display: inline-block;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: #4B3F72; /* Dark lavender */
+    font-size: 16px;
+    padding: 5px 15px; /* Reduced padding */
+    border-radius: 10px;
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+nav ul li a:hover {
+    background-color: #9370DB; /* Accent lavender */
+    color: white;
+    cursor: pointer;
+    outline: 2px solid #9370DB;
+    outline-offset: 2px;
+}
+
+nav ul li a:focus,
+.btn:focus {
+    outline: 2px solid #9370DB; /* Accent lavender */
+    outline-offset: 2px;
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+/* span */
+.name {
+    display: block; 
+    font-weight: bold; 
+    font-size: 20px; 
+    margin: 10px 0; 
+    color: #4B3F72;
+    text-transform: capitalize;
+}
+
+.price {
+    display: block; 
+    font-size: 18px; 
+    color: #9370DB; /* Accent lavender */
+    font-weight: bold; 
+    margin-bottom: 15px;
+}
+
+.add_to_cart {
+    display: inline-block; 
+    background-color: #9370DB; 
+    color: white; 
+    padding: 12px 30px; 
+    text-decoration: none; 
+    border-radius: 25px; 
+    font-weight: bold; 
+    text-align: center; 
+    cursor: pointer; 
+    transition: background-color 0.3s ease;
+    box-shadow: 0 4px 8px rgba(75, 63, 114, 0.1); /* Dark lavender shadow */
+}
+
+/* Search Form */
+.search-form {
+    display: flex;
+    align-items: center; /* Aligns search input and button vertically */
+    gap: 10px;
+}
+
+.search-form input {
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    width: 200px;
+    box-shadow: inset 3px 3px 6px #c8c2d8, 
+                inset -3px -3px 6px #ffffff; /* Neumorphic effect */
+}
+
+.search-form button {
+    padding: 8px 12px;
+    background-color: #9370DB; 
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    box-shadow: 3px 3px 6px #c8c2d8, 
+                -3px -3px 6px #ffffff; /* Neumorphic effect */
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.search-form button:hover {
+    background-color: #816FB0; /* Slightly darker lavender */
+    transform: translateY(-2px);
+}
+
+/* Hero Section */
+.hero {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    height: 450px; /* Adjust this value for responsiveness */
+    background: linear-gradient(145deg, #9370DB, #E6E6FA); /* Gradient lavender */
+    border-radius: 20px;
+    box-shadow: 8px 8px 16px #c8c2d8, 
+                -8px -8px 16px #ffffff;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Background Image */
+.hero-image {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: fill; 
+    opacity: 0.8;
+    z-index: 0;
+}
+
+/* Hero Text */
+.hero h1 {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    font-size: 38px;
+    font-weight: bold;
+    color: #ffffff;
+    text-shadow: 2px 2px 4px #4B3F72; /* Dark lavender shadow */
+    background: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Responsive Font Size */
+@media (max-width: 768px) {
+    .hero {
+        height: 200px;
+    }
+    .hero h1 {
+        font-size: 28px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero {
+        height: 150px;
+    }
+
+    .hero h1 {
+        font-size: 24px;
+    }
+}
+
+/* Categories and Best Sellers Section */
+.categories, .best-sellers {
+    padding: 20px;
+}
+
+/* Heading styling for sections */
+.categories h2, .best-sellers h2 {
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: var(--lavender-dark);
+}
+
+/* Grid layout for categories and products */
+.category-grid, .product-grid, .company-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* Three equal columns */
+    gap: 20px; /* Spacing between items */
+    justify-items: center; /* Center content within each grid item */
+}
+
+/* Neumorphic card styling for categories and products */
+.category-item, .product-item, .company-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%; /* Full width adjustment */
+    max-width: 300px; /* Maximum card width */
+    padding: 15px;
+    background-color: var(--lavender-light);
+    border-radius: 15px;
+    box-shadow: 5px 5px 15px #B8A9C9, -5px -5px 15px #fff;
+    transition: transform 0.3s ease;
+    margin: 10px 0;
+    text-align: center;
+    text-decoration: none;
+}
+
+/* Image styling for items */
+.category-item img, .product-item img, .company-item img {
+    max-width: 100%;
+    height: auto;
+    margin-top: 15px;
+    border-radius: 10px;
+    display: block;
+}
+
+/* Hover effect for cards */
+.category-item:hover, .product-item:hover, .company-item:hover {
+    transform: translateY(-5px);
+    background-color: var(--lavender-hover);
+}
+
+/* Styling for category and company item text */
+.category-item span, .company-item span {
+    display: block;
+    text-align: center;
+    margin-top: 10px;
+    font-size: 16px;
+    color: var(--lavender-dark);
+    font-weight: bold;
+    transition: color 0.3s;
+}
+
+/* Hover effect for category and company item text */
+.category-item:hover span, .company-item:hover span {
+    color: var(--lavender-accent);
+}
+
+/* Footer styling */
+footer {
+    text-align: center;
+    padding: 15px;
+    background-color: var(--lavender-light);
+    box-shadow: inset 5px 5px 15px #B8A9C9, inset -5px -5px 15px #fff;
+    margin-top: auto;
+    color: var(--lavender-dark);
+}
+
+/* Responsive design for different screen sizes */
+@media (max-width: 768px) {
+    .category-grid, .product-grid, .company-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .category-grid, .product-grid, .company-grid {
+        grid-template-columns: 1fr;
+    }
+
+    nav ul {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+/* Button styling */
+.btn {
+    padding: 10px 20px;
+    border-radius: 10px;
+    background: var(--lavender-light);
+    box-shadow: 5px 5px 15px #B8A9C9, -5px -5px 15px #fff;
+    color: #333;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* Button hover effect */
+.btn:hover {
+    transform: translateY(-3px);
+    background-color: var(--lavender-dark);
+    color: var(--white);
+}
+
+/* Image styling for hover effect */
+.category-item img, .product-item img {
+    width: 100%;
+    height: auto;
+    border-radius: 15px;
+    box-shadow: 5px 5px 15px #B8A9C9, -5px -5px 15px #fff;
+    transition: transform 0.3s ease;
+}
+
+/* Hover effect for images */
+.category-item:hover img, .product-item:hover img {
+    transform: translateY(-5px);
+}
+
+/* Companies and Best Sellers Section */
+.companies, .best-sellers {
+    padding: 20px;
+}
+
+/* Heading styling for companies and best sellers */
+.companies h2, .best-sellers h2 {
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: var(--lavender-dark);
+}
+
+/* Neumorphic card styling for companies */
+.company-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-width: 500px;
+    padding: 15px;
+    background-color: var(--lavender-light);
+    border-radius: 15px;
+    box-shadow: 5px 5px 15px #B8A9C9, -5px -5px 15px #fff;
+    transition: transform 0.3s ease;
+    margin: 10px 0;
+    text-align: center;
+    text-decoration: none;
+}
+
+/* Company and product images styling */
+.company-item img, .product-item img {
+    max-width: 100%;
+    height: 200px;
+    margin-top: 15px;
+    border-radius: 10px;
+    display: block;
+}
+
+/* Hover effect for company items */
+.company-item:hover, .product-item:hover {
+    transform: translateY(-5px);
+    background-color: var(--lavender-hover);
+}
+
+/* Text styling for company items */
+.company-item span {
+    display: block;
+    text-align: center;
+    margin-top: 10px;
+    font-size: 32px;
+    color: var(--lavender-dark);
+    font-weight: bold;
+    transition: color 0.3s;
+}
+
+/* Hover effect for company item text */
+.company-item:hover span {
+    color: var(--lavender-accent);
+}
+
+/* Contact Section */
+.contact {
+    padding: 40px;
+}
+
+.contact h1 {
+    text-align: center;
+    margin-bottom: 30px;
+    color: #a57bb8; /* Lavender */
+}
+
+.contact-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 30px;
+}
+
+/* Contact Form Styling */
+.contact-form, .contact-details {
+    flex: 1;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 5px 5px 15px #d1c7d3, -5px -5px 15px #ffffff; /* Light lavender */
+}
+
+.contact-form form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.contact-form label {
+    font-size: 16px;
+    color: #333;
+}
+
+.contact-form input, .contact-form textarea {
+    padding: 10px;
+    font-size: 14px;
+    border: none;
+    border-radius: 10px;
+    box-shadow: inset 3px 3px 6px #d1c7d3, inset -3px -3px 6px #ffffff; /* Light lavender */
+}
+
+.contact-form button {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #a57bb8; /* Lavender */
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    box-shadow: 3px 3px 6px #d1c7d3, -3px -3px 6px #ffffff; /* Light lavender */
+    transition: transform 0.3s ease;
+}
+
+.contact-form button:hover {
+    transform: translateY(-3px);
+}
+
+/* Contact Details Styling */
+.contact-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.contact-details div {
+    padding: 15px;
+    background-color: #f5f3f9; /* Very light lavender */
+    border-radius: 15px;
+    box-shadow: 5px 5px 15px #d1c7d3, -5px -5px 15px #ffffff; /* Light lavender */
+}
+
+/* User Details */
+.profile-user-details {
+    text-align: left;
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f9f9f9; /* Light gray */
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.profile-user-details p {
+    margin: 10px 0;
+    font-size: 16px;
+}
+
+/* Profile Section */
+.profile-section {
+    padding: 50px 0;
+    background: linear-gradient(145deg, #e7d7ed, #ffffff); /* Light lavender to white */
+}
+
+.profile-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+    text-align: center;
+}
+
+.profile-section h2 {
+    color: #a57bb8; /* Lavender */
+    margin-bottom: 20px;
+}
+
+.profile-section p {
+    font-size: 18px;
+    margin-bottom: 30px;
+}
+
+/* Profile Buttons */
+.profile-options {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.profile-section .btn {
+    display: inline-block;
+    padding: 12px 24px;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 16px;
+    transition: background-color 0.3s;
+    cursor: pointer;
+}
+
+.profile-section .btn-primary {
+    background-color: #a57bb8; /* Lavender */
+    color: white;
+    border: none;
+}
+
+.profile-section .btn-secondary {
+    background-color: #a57bb8; /* Lavender */
+    color: white;
+    border: none;
+}
+
+.profile-section .btn-secondary:hover {
+    background-color: #9466a2; /* Darker lavender */
+}
+
+.profile-section .btn-primary:hover {
+    background-color: #9466a2; /* Darker lavender */
+}
+
+/* Add Product Form Styles */
+.add-product {
+    max-width: 1000px; /* Maximum width for the form */
+    margin: 40px auto; /* Center the form */
+    padding: 30px; /* Internal padding */
+    background: #ffffff; /* White background for the form */
+    border-radius: 12px; /* Rounded corners */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1); /* Soft shadow */
+    transition: box-shadow 0.3s; /* Smooth shadow transition */
+}
+
+.add-product:hover {
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.2); /* Slightly darker shadow on hover */
+}
+
+.add-product h2 {
+    text-align: center; /* Center the heading */
+    color: #a57bb8; /* Lavender */
+    margin-bottom: 20px; /* Space below heading */
+}
+
+.add-product label {
+    display: block; /* Each label on a new line */
+    margin-bottom: 5px; /* Space below each label */
+    font-weight: 600; /* Bold labels */
+    color: #555; /* Light grey for labels */
+}
+
+.add-product input[type="text"],
+.add-product input[type="number"],
+.add-product input[type="file"] {
+    width: 100%; /* Full width for inputs */
+    padding: 12px; /* Spacing inside inputs */
+    margin-bottom: 20px; /* Space below each input */
+    border: 1px solid #ddd; /* Light border */
+    border-radius: 8px; /* Rounded corners */
+    font-size: 16px; /* Font size for inputs */
+    background-color: #fff; /* Input background remains white */
+    transition: border-color 0.3s, box-shadow 0.3s; /* Smooth transition */
+}
+
+.add-product input[type="text"]:focus,
+.add-product input[type="number"]:focus {
+    border-color: #a57bb8; /* Lavender border on focus */
+    box-shadow: 0 0 5px rgba(165, 123, 184, 0.5); /* Light lavender shadow on focus */
+    outline: none; /* Remove default outline */
+}
+
+.add-product button {
+    width: 100%; /* Full width for the button */
+    padding: 12px; /* Spacing inside button */
+    background: #a57bb8; /* Lavender background for the button */
+    color: white; /* White text */
+    border: none; /* No border */
+    border-radius: 8px; /* Rounded corners for the button */
+    font-size: 16px; /* Button font size */
+    cursor: pointer; /* Pointer cursor for buttons */
+    transition: background-color 0.3s, transform 0.3s; /* Smooth transitions */
+}
+
+.add-product button:hover {
+    background-color: #9466a2; /* Darker lavender on hover */
+    transform: translateY(-2px); /* Slight lift effect */
+}
+
+.add-product button:active {
+    transform: translateY(0); /* Reset lift effect on click */
+}
+
+.add-product select {
+    width: 100%; /* Full width to match inputs */
+    padding: 12px; /* Same padding as inputs */
+    margin-bottom: 20px; /* Space below each select */
+    border: 1px solid #ddd; /* Light border to match inputs */
+    border-radius: 8px; /* Rounded corners */
+    font-size: 16px; /* Font size to match inputs */
+    background-color: #fff; /* White background */
+    transition: border-color 0.3s, box-shadow 0.3s; /* Smooth transition */
+    cursor: pointer; /* Pointer cursor for dropdowns */
+}
+
+/* Focus state matches input focus styling */
+.add-product select:focus {
+    border-color: #a57bb8; /* Lavender border on focus */
+    box-shadow: 0 0 5px rgba(165, 123, 184, 0.5); /* Light lavender shadow on focus */
+    outline: none; /* Remove default outline */
+}
+
+/* Optional: Style for dropdown options */
+.add-product select option {
+    background-color: #fff; /* White background for options */
+    color: #333; /* Dark text for readability */
+}
+
+/* Responsive Styles */
+@media (max-width: 600px) {
+    .add-product {
+        padding: 20px; /* Adjust padding for smaller screens */
+    }
+
+    .add-product input[type="text"],
+    .add-product input[type="number"],
+    .add-product input[type="file"],
+    .add-product button {
+        font-size: 14px; /* Adjust font size for smaller screens */
+    }
+}
+
+/* Orders Page Container */
+.orders-container {
+    max-width: 1200px;
+    margin: 50px auto;
+    padding: 30px;
+    border-radius: 10px;
+    background-color: #ffffff;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Orders Title */
+.orders-container h1 {
+    text-align: center;
+    color: #a57bb8; /* Lavender */
+    margin-bottom: 30px;
+}
+
+/* Orders Table Styling */
+.container {
+    max-width: 1200px;
+    margin: 50px auto;
+    padding: 30px;
+    border-radius: 10px;
+    background-color: #ffffff;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+.order-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+}
+
+.order-table th, .order-table td {
+    padding: 15px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.order-table thead th {
+    background-color: #a57bb8; /* Lavender */
+    color: white;
+    font-weight: bold;
+    text-align: center;
+}
+
+.order-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.order-table .order-items ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.order-table .order-items li {
+    padding: 5px 0;
+}
+
+/* Back to Home Button */
+.text-center .button {
+    background-color: #a57bb8; /* Lavender */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 20px;
+    margin-left: 40%;
+    text-decoration: none;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    text-align: center;
+}
+
+.text-center .button:hover {
+    background-color: #9466a2; /* Darker lavender */
+}
+
+/* admin_order page  */
+.admin-orders-container {
+    max-width: 1200px;
+    margin: 50px auto;
+    padding: 30px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+}
+
+.admin-order-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px;
+}
+
+.admin-order-table th, .admin-order-table td {
+    padding: 15px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.admin-order-table thead th {
+    background-color: #a57bb8; /* Lavender */
+    color: white;
+    font-weight: bold;
+    text-align: center;
+}
+
+.admin-order-table tbody tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.admin-order-items-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.admin-order-items-list li {
+    padding: 5px 0;
+}
+
+.admin-orders-back {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.admin-back-button {
+    background-color: #a57bb8; /* Lavender */
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    text-decoration: none;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.admin-back-button:hover {
+    background-color: #9466a2; /* Darker lavender */
+}
+
+/* Order Confirmation Container */
+.order-confirmation-container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #ffffff;
+}
+
+/* Header Styles */
+.order-confirmation-header {
+    text-align: center;
+    color: #a57bb8; /* Lavender */
+    font-size: 28px;
+    margin-bottom: 20px;
+}
+
+/* Form Group Styles */
+.form-group {
+    margin-bottom: 15px;
+}
+
+/* Label Styles */
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
+}
+
+/* Input and Select Styles */
+.form-control {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #a57bb8; /* Lavender */
+    box-shadow: 0 0 5px rgba(165, 123, 184, 0.5); /* Light lavender shadow */
+}
+
+/* Address Section Styles */
+.order-confirmation-container h3 {
+    color: #a57bb8; /* Lavender */
+    margin: 20px 0 10px;
+    font-size: 24px;
+}
+
+/* New Address Fields */
+#new_address_fields {
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    margin-bottom: 20px;
+}
+
+#new_address_fields .form-group {
+    margin-bottom: 10px;
+}
+
+/* Button Styles */
+.order-btn {
+    display: inline-block;
+    padding: 10px 20px;
+    font-size: 16px;
+    border-radius: 5px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease;
+    margin: 5px;
+}
+
+.order-btn-primary {
+    background-color: #a57bb8; /* Lavender */
+    color: #fff;
+    border: none;
+}
+
+.order-btn-secondary {
+    background-color: #6c757d;
+    color: #fff;
+    border: none;
+}
+
+.order-btn-primary:hover {
+    background-color: #9466a2; /* Darker lavender */
+}
+
+.order-btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+/* Alerts */
+.order-alert-container {
+    margin-bottom: 20px;
+}
+
+.order-alert {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    font-weight: bold;
+}
+
+.order-alert-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.order-alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+/* Centering Elements */
+.order-text-center {
+    text-align: center;
+}
+

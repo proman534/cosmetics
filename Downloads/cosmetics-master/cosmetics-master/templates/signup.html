@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signup Form</title>
+
+    <!-- Boxicons CDN -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='signup.css') }}">
+    <style>
+        /* Additional styling to position logo and title side by side */
+        .logo-title-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo img {
+            height: 50px;
+            margin-left: 30px;
+        }
+
+        .title {
+            font-size: 24px;
+            color: #333;
+        }
+
+        /* Hide the second form section initially */
+        .form-section {
+            display: none;
+        }
+
+        /* Show the form section that is currently active */
+        .form-section.active {
+            display: block;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Custom styles for alternate phone field */
+        #alt-phone {
+            border-color: pink;
+        }
+
+        #alt-phone:focus {
+            border-color: blue;
+        }
+
+        /* Adjusting the form-box height and making the form content scrollable */
+        .form-box {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        /* Reducing the gap between fields */
+        .input-box {
+            margin-bottom: 10px;
+        }
+
+        /* Two-column layout for some fields */
+        .two-column {
+            display: flex;
+            gap: 15px;
+        }
+
+        .two-column .input-box {
+            flex: 1;
+        }
+
+        /* Styles for flash messages */
+        .flash-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px 20px;
+            border: 1px solid #f5c6cb;
+            border-radius: 5px;
+            display: none;
+            z-index: 1000;
+            transition: opacity 0.5s ease-in-out;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wrapper">
+        <span class="rotate-bg"></span>
+        <span class="rotate-bg2"></span>
+
+        <!-- Flash Message Container -->
+        <div id="flash-messages" data-messages="{{ get_flashed_messages(with_categories=True) | tojson }}"></div>
+
+        <div class="form-box register">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='images/logo1.png') }}" alt="Cosmetics Logo">
+            </div>
+            <h2 class="title">Sign Up</h2>
+            <form id="signupForm" action="{{ url_for('signup') }}" method="POST">
+
+                <!-- Step 1: Initial Details -->
+                <div class="form-section active" id="initial-details">
+                    <div class="input-box">
+                        <input type="text" id="username" name="username" required>
+                        <label for="username">Username</label>
+                        <i class='bx bxs-user'></i>
+                    </div>
+
+                    <div class="input-box">
+                        <input type="email" id="email" name="email" required>
+                        <label for="email">Email</label>
+                        <i class='bx bxs-envelope'></i>
+                    </div>
+
+                    <div class="input-box">
+                        <input type="tel" id="phone" name="phone" required>
+                        <label for="phone">Phone Number</label>
+                        <i class='bx bxs-phone'></i>
+                    </div>
+
+                    <div class="input-box">
+                        <input type="password" id="password" name="password" required>
+                        <label for="password">Password</label>
+                        <i class='bx bxs-lock-alt' id="toggle-password"></i>
+                    </div>
+
+                    <div class="input-box">
+                        <input type="password" id="confirm-password" name="confirm-password" required>
+                        <label for="confirm-password">Confirm Password</label>
+                        <i class='bx bxs-lock-alt'></i>
+                    </div>
+
+                    <button type="button" class="btn" onclick="showNextSection()">Next</button>
+                </div>
+
+                <!-- Step 2: Additional Details -->
+                <div class="form-section" id="additional-details">
+                    <div class="input-box" style="display: flex; align-items: center; gap: 15px;">
+                        <label for="gender">Gender</label>
+                        <div style="display: flex; gap: 10px;">
+                            <div style="margin-left: 100px;">
+                                <input type="radio" id="male" name="gender" value="Male" required>
+                                <label for="male" style="margin-left: 120px;">Male</label>
+                            </div>
+                            <div style="margin-left: 100px;">
+                                <input type="radio" id="female" name="gender" value="Female" required>
+                                <label for="female" style="margin-left: 240px;">Female</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Two-column layout for City and Address Line -->
+                    <div class="two-column">
+                        <div class="input-box" style="margin-top: 1px;">
+                            <input type="text" id="city" name="city" required>
+                            <label for="city">City</label>
+                            <i class='bx bxs-map'></i>
+                        </div>
+
+                        <div class="input-box" style="margin-top: 1px;">
+                            <input type="text" id="address-line" name="address-line" required>
+                            <label for="address-line">Address Line</label>
+                            <i class='bx bxs-home'></i>
+                        </div>
+                    </div>
+
+                    <!-- Two-column layout for State and Pincode -->
+                    <div class="two-column">
+                        <div class="input-box" style="margin-top: 1px;">
+                            <input type="text" id="state" name="state" required>
+                            <label for="state">State</label>
+                            <i class='bx bxs-map'></i>
+                        </div>
+
+                        <div class="input-box" style="margin-top: 1px;">
+                            <input type="text" id="pincode" name="pincode" required>
+                            <label for="pincode">Pincode</label>
+                            <i class='bx bxs-map'></i>
+                        </div>
+                    </div>
+
+                    <!-- Single-column for Country -->
+                    <div class="input-box" style="margin-top: 1px;">
+                        <input type="text" id="country" name="country" required>
+                        <label for="country">Country</label>
+                        <i class='bx bxs-flag'></i>
+                    </div>
+
+                    <div class="button-container">
+                        <button type="button" class="btn" onclick="showPreviousSection()">Back</button>
+                        <button type="submit" class="btn">Sign Up</button>
+                    </div>
+                </div>
+
+                <div class="linkTxt">
+                    <p>Already have an account? <a href="login" class="register-link">Login</a></p>
+                </div>
+            </form>
+        </div>
+
+        <div class="info-text register">
+            <h2>Join Us!</h2>
+            <p>Create an account to enjoy our exclusive features and offers.</p>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript to handle form navigation
+        function showNextSection() {
+            document.getElementById('initial-details').classList.remove('active');
+            document.getElementById('additional-details').classList.add('active');
+        }
+
+        function showPreviousSection() {
+            document.getElementById('additional-details').classList.remove('active');
+            document.getElementById('initial-details').classList.add('active');
+        }
+
+        const passwordInput = document.getElementById('password');
+        const togglePassword = document.getElementById('toggle-password');
+
+        togglePassword.addEventListener('click', function () {
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+
+            // Toggle the eye icon between open and closed
+            this.classList.toggle('bx-show');
+            this.classList.toggle('bx-hide');
+        });
+        // Function to show flash messages
+        function showFlashMessage(message) {
+            const flashMessageDiv = document.getElementById('flashMessage');
+            flashMessageDiv.innerText = message;
+            flashMessageDiv.style.display = 'block';
+
+            setTimeout(() => {
+                flashMessageDiv.style.display = 'none';
+            }, 3000); // Hide after 3 seconds
+        }
+
+        // Example usage (you may want to call this function from Flask)
+        window.onload = function() {
+            const messages = JSON.parse(document.getElementById('flash-messages').dataset.messages);
+            messages.forEach(([category, message]) => {
+                showFlashMessage(message);
+            });
+        };
+    </script>
+</body>
+</html>

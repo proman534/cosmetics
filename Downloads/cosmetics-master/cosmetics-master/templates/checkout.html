@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+
+{% block title %}Checkout{% endblock %}
+
+{% block content %}
+    <style>
+        main {
+            width: 80%;
+            margin: 20px auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        table thead th {
+            background-color: #a57bb8; /* Lavender */
+            color: white;
+            padding: 15px;
+            text-align: left;
+        }
+
+        table tbody td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+
+        table tbody tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        table tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+
+        .item-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .item-info img {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            object-fit: cover;
+            box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: right;
+            color: #a57bb8; /* Lavender */
+        }
+
+        form button {
+            width: 100%;
+            padding: 15px;
+            background-color: #a57bb8; /* Lavender */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        form button:hover {
+            background-color: #8e64a3; /* Slightly darker lavender */
+        }
+
+        .empty-cart {
+            text-align: center;
+            font-size: 18px;
+            color: #999;
+            margin-top: 30px;
+        }
+    </style>
+
+    <main>
+        <h1>Checkout</h1>
+        {% if cart_items %}
+            <table>
+                <thead>
+                    <tr>
+                        <th>Product Image</th>
+                        <th>Product Name</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in cart_items %}
+                    <tr>
+                        <td>
+                            <div class="item-info">
+                                <img src="{{ url_for('static', filename='images/' + item.image) }}" 
+                                     alt="{{ item.name }}">
+                            </div>
+                        </td>
+                        <td>{{ item.name }}</td>
+                        <td>₹{{ '%.2f' | format(item.price) }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>₹{{ '%.2f' | format(item.total) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Display total amount of items -->
+            <h2>Items Total: ₹{{ '%.2f' | format(total_amount) }}</h2>
+
+            <!-- Display delivery charges -->
+            <h2>Delivery Charges: ₹{{ '%.2f' | format(delivery_charge) }}</h2>
+
+            <!-- Calculate and display grand total -->
+            <h2>Grand Total: ₹{{ '%.2f' | format(total_amount + delivery_charge) }}</h2>
+
+            <!-- Place order form -->
+            <form action="{{ url_for('place_order') }}" method="POST">
+                <button type="submit">Place Order</button>
+            </form>
+        {% else %}
+            <p class="empty-cart">Your cart is empty. Please add products to your cart.</p>
+        {% endif %}
+    </main>
+
+    <script>
+        // Get user's location using the Geolocation API
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                saveLocation(position);
+            }, function() {
+                console.error("Geolocation is not enabled or permission denied.");
+            });
+        } else {
+            console.error("Geolocation is not supported by this browser.");
+        }
+
+        function saveLocation(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+
+            // Send the coordinates to the server
+            fetch('/update_location', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ latitude: latitude, longitude: longitude }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Location updated successfully!');
+                } else {
+                    console.error('Failed to update location.');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+{% endblock %}

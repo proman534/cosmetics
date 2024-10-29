@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block content %}
+<style>
+    .container {
+        max-width: 600px;
+        margin: 50px auto;
+        background-color: #fff;
+        padding: 20px 30px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 10px 20px;
+        font-size: 16px;
+        border-radius: 5px;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background-color 0.3s ease, color 0.3s ease;
+        margin: 10px;
+        background-color: #8a2be2; /* Lavender button color */
+        color: #fff;
+        border: none;
+    }
+
+    .btn:hover {
+        background-color: #7a1fbf; /* Darker lavender on hover */
+    }
+
+    .order-details {
+        margin-top: 20px;
+    }
+
+    .order-details h2 {
+        font-size: 20px;
+        margin-bottom: 10px;
+        color: #8a2be2; /* Lavender color for headings */
+    }
+
+    .order-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+
+    .order-table th, .order-table td {
+        padding: 12px;
+        border: 1px solid #ddd;
+        text-align: left;
+    }
+
+    .order-table th {
+        background-color: #8a2be2; /* Lavender background for table header */
+        color: white;
+    }
+
+    /* Item Image Styling */
+    .item-info {
+        display: flex;
+        align-items: center;
+        justify-content: center; /* Center the item info in the cell */
+        gap: 15px;
+    }
+
+    .item-info img {
+        width: 60px;
+        height: 60px;
+        border-radius: 8px;
+        object-fit: cover;
+        box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.1);
+    }
+</style>
+<div class="container text-center">
+    <h1>Thank You for Your Order!</h1>
+    <p>Your order <strong>#{{ order.order_number }}</strong> has been placed successfully.</p>
+
+    <div class="order-details">
+        <h2>Order Details</h2>
+        <p><strong>Delivery Address:</strong> {{ address.address_line }}, {{ address.city }}, {{ address.state }} {{ address.postal_code }}</p>
+        <p><strong>Order Date:</strong> {{ order.placed_at.strftime('%Y-%m-%d %H:%M') }}</p>
+        <p><strong>Delivery Date:</strong> {{ order.delivery_date.strftime('%Y-%m-%d') }}</p>
+
+        <h3>Items Ordered:</h3>
+        <table class="order-table">
+            <thead>
+                <tr>
+                    <th>Image</th>
+                    <th>Product Name</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order_items %}
+                <tr>
+                    <td><div class="item-info">
+                        <img src="{{ url_for('static', filename='images/' + item.product_image) }}" alt="{{ item.name }}">
+                    </div></td>
+                    <td>{{ item.product_name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>₹{{ item.price }}</td>
+                    <td>₹{{ item.total }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <p><strong>Delivery Charges:</strong> ₹{{ order.delivery_charge }}</p>
+        <p><strong>Total Amount:</strong> ₹{{ order.total_amount }}</p>
+    </div>
+
+    <a href="{{ url_for('home') }}" class="btn btn-primary">Continue Shopping</a>
+</div>
+{% endblock %}

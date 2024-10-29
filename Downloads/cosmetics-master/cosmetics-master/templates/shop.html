@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Saloon Capillus{% endblock %}
+
+{% block content %}
+    <section class="best-sellers">
+        <h2>Products</h2>
+        <div class="product-grid">
+            {% for product in products %}
+            <div class="product-item" style="text-align: center; margin-bottom: 20px;">
+                <img src="{{ url_for('static', filename='images/' ~ product.image) }}" 
+                     alt="{{ product.name }}" style="width: 100%; max-width: 250px; height: auto; border-radius: 8px;">
+                
+                <span class="name">
+                    {{ product.name }}
+                </span>
+
+                <div class="price">
+                    {% if product.discount > 0 %}
+                        <span style="text-decoration: line-through; color: #999;">
+                            ₹{{ product.price }}
+                        </span>
+                        <span style="color: #db7093; font-weight: bold; margin-left: 10px;">
+                            ₹{{ product.price - (product.price * product.discount / 100) }}
+                        </span>
+                    {% else %}
+                        <span>₹{{ product.price }}</span>
+                    {% endif %}
+                </div>
+
+                <a href="{{ url_for('add_to_cart', product_id=product.id) }}" 
+                   class="add_to_cart">
+                    Add to Cart
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+{% endblock %}
