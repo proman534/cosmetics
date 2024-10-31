@@ -1,7 +1,5 @@
 {% extends 'base.html' %}
 
-{% block title %}Saloon Capillus{% endblock %}
-
 {% block content %}
     <section class="best-sellers">
         <h2>Products</h2>
@@ -15,9 +13,18 @@
                     {{ product.name }}
                 </span>
 
-                <span class="price">
-                    ₹{{ product.price }}
-                </span>
+                <div class="price">
+                    {% if product.discount > 0 %}
+                        <span style="text-decoration: line-through; color: #999;">
+                            ₹{{ product.price }}
+                        </span>
+                        <span style="color: #db7093; font-weight: bold; margin-left: 10px;">
+                            ₹{{ product.price - (product.price * product.discount / 100) }}
+                        </span>
+                    {% else %}
+                        <span>₹{{ product.price }}</span>
+                    {% endif %}
+                </div>
 
                 <a href="{{ url_for('add_to_cart', product_id=product.id) }}" 
                    class="add_to_cart">

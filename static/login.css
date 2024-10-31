@@ -38,7 +38,18 @@ body::before {
     z-index: -1; /* Ensure it stays behind the content */
 }
 
+/* Styling for the eye icon */
+.password-container {
+    position: relative;
+}
 
+.password-container i {
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    cursor: pointer;
+}
 
 .wrapper{
     position: relative;

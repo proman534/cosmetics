@@ -1,21 +1,21 @@
 from MySQLdb import IntegrityError
-from flask import Flask, render_template, request, redirect, url_for, session, flash, make_response
+from flask import Flask, render_template, request, redirect, url_for, session, flash, make_response, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import or_
 from flask_migrate import Migrate
 from werkzeug.utils import secure_filename  
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
+from math import radians, sin, cos, sqrt, atan2
+from opencage.geocoder import OpenCageGeocode
+import requests
+import pandas as pd
 import os
 import random
 import uuid
 import string
 import re
 from dotenv import load_dotenv
-from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter
-from io import BytesIO
-
 
 
 # Load environment variables
@@ -26,6 +26,7 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/images'
+app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:root@localhost/cosmetics"
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -44,13 +45,16 @@ def clear_cart():
 
 # User Model
 class User(db.Model):
-    __tablename__ = 'user'  # Make sure this matches the table name
+    __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False) 
     phone = db.Column(db.String(15), nullable=False)
+    gender = db.Column(db.String(10))  # New gender column
     user_type = db.Column(db.String(10), default='user')
+    latitude = db.Column(db.Float, nullable=True)  # Add this line
+    longitude = db.Column(db.Float, nullable=True)
 
     orders = db.relationship('Order', back_populates='user', lazy=True)
     addresses = db.relationship('Address', backref='user', lazy=True)
@@ -62,8 +66,11 @@ class Product(db.Model):
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.String(500), nullable=True)
     price = db.Column(db.Float, nullable=False)
+    discount = db.Column(db.Float, nullable=True, default=0.0)  # New discount column
     category = db.Column(db.String(50), nullable=False)
+    company = db.Column(db.String(100), nullable=False)
     stock = db.Column(db.Integer, nullable=False)
+    hsn_sac = db.Column(db.Integer, nullable=False)  # New HSN/SAC column
     image = db.Column(db.String(200), nullable=False)
 
     def __repr__(self):
@@ -111,6 +118,7 @@ class OrderItem(db.Model):
 
 
 
+
 # Order Model
 class Order(db.Model):
     __tablename__ = 'orders'
@@ -119,6 +127,7 @@ class Order(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)  # Use 'user.id'
     address_id = db.Column(db.Integer, db.ForeignKey('addresses.id'), nullable=True)
     total_amount = db.Column(db.Float, nullable=False)
+    delivery_charge = db.Column(db.Float, nullable=True)  # New delivery_charge field
     delivery_date = db.Column(db.DateTime, nullable=False)
     placed_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
 
@@ -126,10 +135,11 @@ class Order(db.Model):
     user = db.relationship('User', back_populates='orders')  # Ensure it matches with the User model
     address = db.relationship('Address', backref='orders', lazy=True)
 
-    def __init__(self, order_number, user_id, total_amount, delivery_date, address_id=None):
+    def __init__(self, order_number, user_id, total_amount, delivery_charge, delivery_date, address_id=None):
         self.order_number = order_number
         self.user_id = user_id
         self.total_amount = total_amount
+        self.delivery_charge = delivery_charge  # Initialize the delivery_charge
         self.delivery_date = delivery_date
         self.address_id = address_id
 
@@ -146,6 +156,15 @@ class Address(db.Model):
     country = db.Column(db.String(100), nullable=False)
     address_type = db.Column(db.Enum('default', 'secondary'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class CompanyDetails(db.Model):
+    __tablename__ = 'company_details'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    company_name = db.Column(db.String(100), nullable=False, unique=True)
+    category = db.Column(db.String(50), nullable=False)
+    image = db.Column(db.String(100), nullable=True)
+
 
 # Utility function to get cart item count
 def get_cart_item_count():
@@ -182,7 +201,9 @@ def home():
 def profile():
     user = session.get('user')
     user_d = User.query.get(session.get('user_id'))
-    return render_with_cart('profile.html', user=user,  user_d=user_d)
+    user_id=session['user_id']
+    addresses = Address.query.filter_by(user_id=user_id).all()
+    return render_with_cart('profile.html', user=user,  user_d=user_d, addresses=addresses)
 
 
 # Route for adding a product
@@ -190,12 +211,33 @@ def profile():
 def add_product():
     if session.get('user_type') != "admin":
         return redirect(url_for('login'))
+
+    if request.method == 'GET':
+        if 'category' in request.args:
+            category = request.args.get('category')
+            companies = [
+                row[0] for row in db.session.query(CompanyDetails.company_name)
+                .filter(CompanyDetails.category == category).distinct().all()
+            ]
+            return jsonify(companies)
+
+        # Fetch all products to display in the table
+        products = db.session.query(Product).all()
+        categories = [row[0] for row in db.session.query(CompanyDetails.category).distinct().all()]
+        companies = [row[0] for row in db.session.query(CompanyDetails.company_name).distinct().all()]
+        return render_with_cart('add_product.html', categories=categories, products=products,  companies=companies)
+
+
     if request.method == 'POST':
+        product_id = request.form.get('product_id')  # Get the product ID for editing
         name = request.form['name']
         description = request.form['description']
         price = float(request.form['price'])
+        discount = float(request.form['discount'])
         category = request.form['category']
+        company = request.form['company']
         stock = int(request.form['stock'])
+        hsn_sac = int(request.form['hsn_sac'])
         image = request.files['image']
 
         image_filename = 'default.jpg'  # Default image if not provided
@@ -203,16 +245,124 @@ def add_product():
             image_filename = secure_filename(image.filename)
             image.save(os.path.join(app.config['UPLOAD_FOLDER'], image_filename))
 
-        new_product = Product(name=name, description=description, price=price, category=category, stock=stock, image=image_filename)
+        if product_id:  # If product_id exists, update the existing product
+            existing_product = db.session.query(Product).filter(Product.id == product_id).first()
+            if existing_product:
+                existing_product.name = name
+                existing_product.description = description
+                existing_product.price = price
+                existing_product.discount = discount
+                existing_product.category = category
+                existing_product.company = company
+                existing_product.stock = stock
+                existing_product.hsn_sac = hsn_sac
+                existing_product.image = image_filename
+                flash('Product updated successfully!', 'success')
+        else:  # If product_id does not exist, add a new product
+            new_product = Product(name=name, description=description, price=price, discount=discount, category=category, company=company, stock=stock, hsn_sac=hsn_sac, image=image_filename)
+            try:
+                db.session.add(new_product)
+                flash('Product added successfully!', 'success')
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Error adding product: {str(e)}', 'danger')
+
+        db.session.commit()
+        return redirect(url_for('add_product'))
+
+    return redirect(url_for('add_product'))  # Fallback in case of unexpected methods
+
+@app.route('/delete-product/<int:product_id>', methods=['POST'])
+def delete_product(product_id):
+    if session.get('user_type') != "admin":
+        return redirect(url_for('login'))
+
+    product = db.session.query(Product).filter(Product.id == product_id).first()
+    if product:
+        db.session.delete(product)
+        db.session.commit()
+        flash('Product deleted successfully!', 'success')
+    else:
+        flash('Product not found!', 'danger')
+
+    return redirect(url_for('add_product'))
+
+@app.route('/test_flash')
+def test_flash():
+    flash('This is a test message!', 'info')
+    return redirect(url_for('home'))
+
+
+@app.route('/add-company', methods=['GET', 'POST'])
+def add_company():
+    if session.get('user_type') != "admin":
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        company_id = request.form.get('company_id')  # Handle editing case
+        name = request.form['name']
+        category = request.form['category']
+        image = request.files.get('image')  # Use .get() to avoid KeyError
+
+        # Initialize the filename to None or retain the old image on edit
+        image_filename = None
+
+        if image and image.filename != '':
+            # Secure the filename and save it to the upload folder
+            image_filename = secure_filename(image.filename)
+            upload_path = os.path.join(app.config['UPLOAD_FOLDER'], image_filename)
+            image.save(upload_path)
+
+        # Create a new company or update an existing one
+        if company_id:
+            company = CompanyDetails.query.get(company_id)
+            if company:
+                company.company_name = name
+                company.category = category
+                if image_filename:
+                    company.image = image_filename  # Update the image only if a new one is uploaded
+        else:
+            # Create a new company record
+            company = CompanyDetails(
+                company_name=name, 
+                category=category, 
+                image=image_filename
+            )
+            db.session.add(company)
+
         try:
-            db.session.add(new_product)
             db.session.commit()
+            flash('Company saved successfully!', 'success')
         except Exception as e:
             db.session.rollback()
-            flash(f'Error adding product: {str(e)}', 'danger')
-        return redirect(url_for('shop'))
+            flash(f'Error saving company: {str(e)}', 'danger')
 
-    return render_with_cart('add_product.html')
+        return redirect(url_for('add_company'))
+
+    # Render the form with existing companies
+    companies = CompanyDetails.query.all()
+    return render_template('add_company.html', companies=companies)
+
+@app.route('/delete-company/<int:company_id>', methods=['POST'])
+def delete_company(company_id):
+    if session.get('user_type') != "admin":
+        return redirect(url_for('login'))
+
+    company = CompanyDetails.query.get(company_id)
+    if company:
+        try:
+            db.session.delete(company)
+            db.session.commit()
+            flash('Company deleted successfully!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error deleting company: {str(e)}', 'danger')
+    else:
+        flash('Company not found!', 'warning')
+
+    return redirect(url_for('add_company'))
+
+
 
 # Route for Shop
 @app.route('/shop')
@@ -246,9 +396,9 @@ def add_to_cart(product_id):
             cart_item = CartItem(
                 name=product.name,
                 product_id=product.id,
-                price=product.price,
+                price= product.price - (product.price * product.discount / 100),
                 quantity=1,
-                total=product.price,
+                total=product.price - (product.price * product.discount / 100),
                 user_id=user_id,  # Set user_id if logged in
                 session_id=session_id if not user_id else None,  # Set session_id if not logged in
                 image=product.image
@@ -272,15 +422,29 @@ def cart():
     session_id = get_session_id()
 
     if user_id:
-        # Retrieve cart items for logged-in user
+        # Retrieve cart items for logged-in use
         cart_items = CartItem.query.filter_by(user_id=user_id).all()
+        cartstock = [
+        {
+            'item': item,
+            'stock': Product.query.get(item.product_id).stock
+        }
+        for item in cart_items
+    ]
+        # flash('Items are in cart!','success')
     else:
         # Retrieve cart items for guest user
         cart_items = CartItem.query.filter_by(session_id=session_id).all()
-
+        cartstock = [
+        {
+            'item': item,
+            'stock': Product.query.get(item.product_id).stock
+        }
+        for item in cart_items
+        ]
     total_amount = sum(item.total for item in cart_items)
     user = session.get('user')
-    return render_with_cart('cart.html', cart_items=cart_items, total_amount=total_amount, user=user)
+    return render_with_cart('cart.html', cart_items=cart_items, total_amount=total_amount, user=user, cartstock=cartstock)
 
 
 # Route for removing an item from the cart
@@ -297,25 +461,41 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        
+
         user = User.query.filter_by(username=username).first()
-        
-        # Check if user exists and password matches
+
+        # Check if user exists and password is correct
         if user and check_password_hash(user.password, password):
             session['user'] = user.username
             session['user_id'] = user.id
             session['user_type'] = user.user_type
 
-            # Check if the user is an admin
-            if user.user_type ==  'admin':
-                flash('Admin login successful!', 'success')
-                return redirect(url_for('admin'))  # Redirect to admin page
-            
-            flash('Login successful!', 'success')
-            return redirect(url_for('home'))
-        else:
-            flash('Invalid credentials', 'danger')
+            # Handle cart persistence if cart items exist in session
+            if 'cart' in session:
+                for item in session.pop('cart'):
+                    cart_item = CartItem(
+                        user_id=user.id,
+                        product_id=item['product_id'],
+                        name=item['name'],
+                        image=item['image'],
+                        quantity=item['quantity'],
+                        price=item['price'],
+                        total=item['total']
+                    )
+                    db.session.add(cart_item)
+                db.session.commit()  # Commit cart items to database
+
+            # Admin user redirection
+            if user.user_type == 'admin':
+                # flash('Admin login successful!', 'success')
+                return redirect(url_for('admin'))
+
+            # flash('Login successful!', 'success')
+            return redirect(url_for('home'))  # Redirect regular user to home page
+
+        flash('Invalid credentials', 'danger')  # Handle login failure
     return render_template('login.html')
+
 
 # Route for Admin Page
 @app.route('/admin')
@@ -350,41 +530,91 @@ def admin_orders():
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        email = request.form['email']
-        phone = request.form['phone']
+        # Step 1: Extract User Details
+        username = request.form.get('username')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm-password')
+        email = request.form.get('email')
+        phone = request.form.get('phone')
+        gender = request.form.get('gender')
+        address_line = request.form.get('address-line')
+        city = request.form.get('city')
+        state = request.form.get('state')
+        postal_code = request.form.get('pincode')
+        country = request.form.get('country')
 
-        existing_user = User.query.filter_by(username=username).first()
-        existing_email = User.query.filter_by(email=email).first()
-        if existing_user:
+        if not all([address_line, city, state, postal_code, country]):
+            flash('Please fill in all address details.', 'error')
+            return render_template('signup.html')
+
+        # Validate User Details
+        if not all([username, password, confirm_password, email, phone, gender]):
+            flash('Please fill in all required fields.', 'error')
+            return render_template('signup.html')
+
+        if password != confirm_password:
+            flash('Passwords do not match.', 'error')
+            return render_template('signup.html')
+
+        # Check if username or email already exists
+        if User.query.filter_by(username=username).first():
             flash('Username already exists. Please choose a different one.', 'error')
-            return redirect(url_for('signup'))
-        if existing_email:
-            flash('Email already exists. Please use a different one.', 'error')
-            return redirect(url_for('signup'))
+            return render_template('signup.html')
 
+        if User.query.filter_by(email=email).first():
+            flash('Email already exists. Please use a different one.', 'error')
+            return render_template('signup.html')
+
+        # Hash the password
         hashed_password = generate_password_hash(password)
-        new_user = User(username=username, password=hashed_password, email=email, phone=phone)
+
+        # Create the new User object
+        new_user = User(
+            username=username,
+            password=hashed_password,
+            email=email,
+            phone=phone,
+            gender=gender
+        )
 
         try:
+            # Save the user to generate a user_id
             db.session.add(new_user)
             db.session.commit()
+
+            # Create the Address object linked to the new user's ID
+            address = Address(
+                user_id=new_user.id,  # Use user_id to link the address
+                address_line=address_line,
+                city=city,
+                state=state,
+                postal_code=postal_code,
+                country=country,
+                address_type='default',  # Default address type
+                created_at=datetime.utcnow()
+            )
+
+            # Save the address
+            db.session.add(address)
+            db.session.commit()
+
             flash('Signup successful! Please log in.', 'success')
             return redirect(url_for('login'))
         except Exception as e:
             db.session.rollback()
-            flash('An error occurred while creating your account. Please try again.', 'error')
-            return redirect(url_for('signup'))
+            flash('An error occurred: ' + str(e), 'error')  # Display the error message
+            return render_template('signup.html')
 
+    # Render the signup form on GET request
     return render_template('signup.html')
+
 
 # Logout
 @app.route('/logout')
 def logout():
     session.pop('user', None)
     session.pop('user_id', None)  # Remove user_id from session
-    flash('You have successfully logged out.', 'info')
+    # flash('You have successfully logged out.', 'info')
     return redirect(url_for('home'))
 
 # Route for Contact
@@ -432,7 +662,8 @@ def search():
         # Create a search filter for each term
         filters = [or_(
             Product.name.ilike(f'%{term}%'),
-            Product.category.ilike(f'%{term}%')
+            Product.category.ilike(f'%{term}%'),
+            Product.company.ilike(f'%{term}%')
         ) for term in search_terms]
 
         # Combine filters with OR logic
@@ -442,76 +673,108 @@ def search():
     return render_with_cart('shop.html', products=products, user=user, found=found)
 
 
-
-
 @app.route('/place_order', methods=['GET', 'POST'])
 def place_order():
-    if request.method == 'POST':
-        user_id = session.get('user_id')
-        session_id = get_session_id()
+    # Check if the user is logged in
+    user_id = session.get('user_id')
+    user = User.query.get(user_id) if user_id else None
 
-        if user_id:
-            # Retrieve cart items for logged-in user
-            cart_items = CartItem.query.filter_by(user_id=user_id).all()
-        else:
-            # Retrieve cart items for guest user
-            cart_items = CartItem.query.filter_by(session_id=session_id).all()
+    if not user:  # If the user isn't logged in
+        flash('Please log in to proceed with the order.', 'warning')
 
-        if not cart_items:
-            flash('Your cart is empty.', 'info')
-            return redirect(url_for('cart'))
+        # Save the current cart in the session temporarily
+        cart_items = CartItem.query.filter_by(user_id=None).all()
+        session['cart'] = [
+            {
+                'product_id': item.product_id,
+                'name': item.name,
+                'image': item.image,
+                'quantity': item.quantity,
+                'price': item.price,
+                'total': item.total
+            } 
+            for item in cart_items
+        ]
+        session.permanent = True  # Keep session active longer
+        return redirect(url_for('login'))  # Redirect to login page
 
-        total_amount = sum(item.total for item in cart_items)
-        delivery_date = datetime.now() + timedelta(days=5)
-        order_number = generate_unique_order_number()
+    # If user is logged in, retrieve cart items (either from session or database)
+    cart_items = session.pop('cart', None) or CartItem.query.filter_by(user_id=user_id).all()
 
-        # Create a new Order
-        new_order = Order(order_number=order_number, user_id=user_id, total_amount=total_amount, delivery_date=delivery_date)
+    if not cart_items:  # If no cart items found
+        flash('Your cart is empty.', 'info')
+        return redirect(url_for('cart'))
 
-        try:
-            db.session.add(new_order)
-            db.session.flush()  # Flush to get the order ID for order items
+    # Check if user location is available
+    if not user.latitude or not user.longitude:
+        flash('Please allow location access to proceed with the order.', 'warning')
+        return redirect(url_for('cart'))
 
-            # Create OrderItems for each CartItem
-            for cart_item in cart_items:
-                order_item = OrderItem(
-                    order_id=new_order.id,
-                    product_id=cart_item.product_id,
-                    product_name=cart_item.name,
-                    product_image=cart_item.image,
-                    quantity=cart_item.quantity,
-                    price=cart_item.price,
-                    total=cart_item.total
-                )
-                db.session.add(order_item)
+    # Calculate delivery distance and charge
+    distance = calculate_distance(user.latitude, user.longitude)
+    delivery_charge = calculate_delivery_charge(distance)
 
-            db.session.commit()  # Commit all changes
-            clear_cart()  # Clear the cart after placing the order
-            flash('Order placed successfully!', 'success')
-            return redirect(url_for('order_confirmation'))
+    # Calculate the total amount including delivery charge
+    if isinstance(cart_items[0], dict):  # If cart items are from session
+        total_amount = sum(item['total'] for item in cart_items) + delivery_charge
+    else:  # If cart items are from the database
+        total_amount = sum(item.total for item in cart_items) + delivery_charge 
 
-        except IntegrityError:
-            db.session.rollback()
-            flash('An error occurred while placing your order. Please try again.', 'danger')
+    # Create a new order
+    new_order = Order(
+        order_number=generate_unique_order_number(),
+        user_id=user_id,
+        total_amount=total_amount,
+        delivery_date=datetime.now() + timedelta(days=5),
+        delivery_charge=delivery_charge
+    )
 
-    return render_with_cart('user_details.html')
+    try:
+        db.session.add(new_order)
+        db.session.flush()  # Get the order ID
+        # Create order items from cart items
+        for item in cart_items:
+            order_item = OrderItem(
+                order_id=new_order.id,
+                product_id=item['product_id'] if isinstance(item, dict) else item.product_id,
+                product_name=item['name'] if isinstance(item, dict) else item.name,
+                product_image=item['image'] if isinstance(item, dict) else item.image,
+                quantity=item['quantity'] if isinstance(item, dict) else item.quantity,
+                price=item['price'] if isinstance(item, dict) else item.price,
+                total=item['total'] if isinstance(item, dict) else item.total
+            )
+            db.session.add(order_item)
+
+        db.session.commit()  # Save changes to the database
+        clear_cart()  # Clear the cart
+
+        # flash('Order placed successfully!', 'success')
+        return redirect(url_for('order_confirmation'))  # Redirect to confirmation page
+
+    except IntegrityError:
+        db.session.rollback()  # Rollback in case of error
+        flash('An error occurred while placing your order. Please try again.', 'danger')
+        return redirect(url_for('cart'))  # Redirect to cart on failure
+
 
 @app.route('/order_confirmation', methods=['GET', 'POST'])
 def order_confirmation():
-    user = session.get('user')
-    user_id = session.get('user_id')  # Ensure user is logged in
+    # Check if user is logged in
+    user_id = session.get('user_id')
     if not user_id:
         flash("Please log in to continue.", "danger")
         return redirect(url_for('login'))
 
-    # Fetch user's addresses
     addresses = Address.query.filter_by(user_id=user_id).all()
+    order = Order.query.filter_by(user_id=user_id).order_by(Order.id.desc()).first()
+    order_items = order.order_items if order else []
+    products = Product.query.all()
 
     if request.method == 'POST':
         selected_address_id = request.form.get('address_id')
-        add_new_address = request.form.get('add_new_address')  # Checkbox or flag to indicate if a new address will be added
-        
-        # If a new address is to be added, collect the details
+        add_new_address = request.form.get('add_new_address')
+
+        # Adding a new address if provided
         if add_new_address:
             new_address_line = request.form.get('new_address_line')
             new_city = request.form.get('new_city')
@@ -519,11 +782,11 @@ def order_confirmation():
             new_postal_code = request.form.get('new_postal_code')
             new_country = request.form.get('new_country')
 
-            if not new_address_line or not new_city or not new_state or not new_postal_code or not new_country:
+            if not all([new_address_line, new_city, new_state, new_postal_code, new_country]):
                 flash("Please provide all address details.", "danger")
                 return redirect(url_for('order_confirmation'))
 
-            # Add new address as secondary
+            # Add the new address to the database
             new_address = Address(
                 user_id=user_id,
                 address_line=new_address_line,
@@ -531,33 +794,62 @@ def order_confirmation():
                 state=new_state,
                 postal_code=new_postal_code,
                 country=new_country,
-                address_type='secondary'  # Set as secondary address
+                address_type='secondary'
             )
             db.session.add(new_address)
             db.session.commit()
+            selected_address_id = new_address.id
 
-            selected_address_id = new_address.id  # Use the new address ID for the order
+        if selected_address_id and order:
+            # Update the order with the new address
+            order.address_id = selected_address_id
 
-        # If a primary address is selected
-        if selected_address_id:
-            order = Order.query.filter_by(user_id=user_id).order_by(Order.id.desc()).first()
+            # Get the selected address
+            address_entry = Address.query.get(selected_address_id)
+            full_address = f"{address_entry.address_line}, {address_entry.city}, {address_entry.state}"
+            print(full_address)
 
-            if order:
-                # Update order with the selected address
-                order.address_id = selected_address_id  # Set the foreign key to the address ID
-                try:
-                    db.session.commit()  # Save the updated order
-                    clear_cart()  # Empty the cart after order confirmation
-                    flash("Order placed successfully!", "success")
-                    return redirect(url_for('order_success', order_number=order.order_number))
-                except IntegrityError:
-                    db.session.rollback()
-                    flash("An error occurred while confirming your order. Please try again.", "danger")
-            else:
-                flash("No active order found. Please try again.", "danger")
-                return redirect(url_for('cart'))
+            # Convert address to latitude and longitude
+            latitude, longitude = get_lat_lon_from_address(full_address)
+            print("this are what I want:", latitude, longitude)
+            if latitude is None or longitude is None:
+                flash("Unable to fetch the location for the selected address.", "danger")
+                return redirect(url_for('order_confirmation'))
 
-    return render_with_cart('order_confirmation.html', addresses=addresses, user=user)
+            # Update user location with the new coordinates
+            user = session.get(user_id)
+            if user:
+                user.latitude = latitude
+                user.longitude = longitude
+                db.session.commit()
+
+            # Calculate the delivery charge based on the new address
+            distance = calculate_distance(latitude, longitude)
+            print(distance)
+            delivery_charge = calculate_delivery_charge(distance)
+
+            # Update the order's delivery charge and total amount
+            order.delivery_charge = delivery_charge
+            order.total_amount = order.total_amount
+            try:
+                db.session.commit()
+                clear_cart()  # Clear cart on order confirmation
+                flash("Order placed successfully!", "success")
+                return redirect(url_for('order_success', order_number=order.order_number))
+            except IntegrityError:
+                db.session.rollback()
+                flash("An error occurred while placing the order. Please try again.", "danger")
+
+    # Back to cart action
+    if request.form.get('back_to_cart'):
+        if order:
+            # Delete the order and its items if back to cart is selected
+            OrderItem.query.filter_by(order_id=order.id).delete()
+            db.session.delete(order)
+            db.session.commit()
+        return redirect(url_for('cart'))
+
+    return render_with_cart('order_confirmation.html', addresses=addresses, order=order, order_items=order_items, products=products)
 
 @app.route('/order_success/<order_number>')
 def order_success(order_number):
@@ -566,11 +858,11 @@ def order_success(order_number):
     cart_count = get_cart_item_count()
     # Retrieve the items related to this order
     order_items = OrderItem.query.filter_by(order_id=order.id).all()  # Get related order items
-    
+    address = order.address
     user = session.get('user')  # Get the current user from the session
-
+    
     # Render the template with all the necessary data
-    return render_template('order_success.html', order=order, order_items=order_items, user=user, cart_count=cart_count)
+    return render_template('order_success.html', order=order, address=address, order_items=order_items, user=user, cart_count=cart_count)
 
 
 
@@ -601,15 +893,116 @@ def checkout():
     user = session.get('user')
     user_id = session.get('user_id')
     session_id = get_session_id()
+    
     if user_id:
         # Retrieve cart items for logged-in user
         cart_items = CartItem.query.filter_by(user_id=user_id).all()
+        
+        # Get user's latitude and longitude
+        user_1 = User.query.get(user_id)
+        user_latitude = user_1.latitude
+        user_longitude = user_1.longitude
     else:
         # Retrieve cart items for guest user
         cart_items = CartItem.query.filter_by(session_id=session_id).all()
+        user_latitude = None
+        user_longitude = None
+
+    # Check if cart is empty
+    if not cart_items:
+        flash('Your cart is empty. Please add items to your cart before proceeding to checkout.', 'info')
+        return redirect(url_for('shop'))  # Redirect to your shopping page
+
+    # Calculate the total amount for items in the cart
     total_amount = sum(item.total for item in cart_items)
-    user = session.get('user')
-    return render_with_cart('checkout.html', cart_items=cart_items, total_amount=total_amount, user=user)
+
+    # Calculate delivery charge if the user has a location
+    if user_latitude is not None and user_longitude is not None:
+                
+        # Calculate distance from user to the mart
+        distance = calculate_distance(user_latitude, user_longitude)
+        delivery_charge = calculate_delivery_charge(distance)
+    else:
+        delivery_charge = 50  # Default delivery charge if no location is available
+
+    # Pass the total amount excluding delivery charge for display
+    return render_with_cart(
+        'checkout.html', 
+        cart_items=cart_items, 
+        total_amount=total_amount,  # Total amount excludes delivery charge for display
+        user=user,
+        delivery_charge=delivery_charge  # Pass delivery charge to the template
+    )
+
+
+key = '52b7410b7e004496a84e41255d539076'
+geocoder = OpenCageGeocode(key)
+
+def get_lat_lon_from_address(address):
+    """Fetch latitude and longitude from OpenCage API for the given address."""
+    result = geocoder.geocode(address)
+    print(u'%f;%f' % (result[0]['geometry']['lat'],
+                        result[0]['geometry']['lng']))
+    return  result[0]['geometry']['lat'], result[0]['geometry']['lng']
+
+
+@app.route('/update_location', methods=['POST'])
+def update_location():
+    user_id = session.get('user_id')
+
+    # Check if user_id exists in the session
+    if not user_id:
+        return jsonify({'success': False, 'message': 'User not logged in'}), 400
+
+    # Fetch the address associated with the user_id
+    address_entry = Address.query.filter_by(user_id=user_id).first()
+    
+    if not address_entry:
+        return jsonify({'success': False, 'message': 'No address found for the user'}), 400
+
+    # Assuming address_entry contains fields: street, city, state, and zip
+    full_address = f"{address_entry.address_line}, {address_entry.city}, {address_entry.state}, {address_entry.postal_code}"
+
+    # Convert the address to latitude and longitude
+    latitude, longitude = get_lat_lon_from_address(full_address)
+
+    if latitude is None or longitude is None:
+        return jsonify({'success': False, 'message': 'Unable to fetch location'}), 400
+
+    # Update the User's latitude and longitude in the database
+    user = User.query.get(user_id)
+    if user:
+        user.latitude = latitude
+        user.longitude = longitude
+        db.session.commit()
+        return jsonify({'success': True, 'latitude': latitude, 'longitude': longitude})
+
+    return jsonify({'success': False, 'message': 'User not found'}), 400
+def calculate_distance(lat2, lon2):
+    """Calculate the distance between two points (latitude, longitude) using the Haversine formula."""
+    R = 6371.0  # Radius of the Earth in kilometers
+    lat1 = 17.437394
+    lon1 = 78.433707
+    lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
+
+    # Differences in coordinates
+    dlat = lat2 - lat1
+    dlon = lon2 - lon1
+
+    # Haversine formula
+    a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1 - a))
+    distance = R * c  # Distance in kilometers
+    return distance
+
+def calculate_delivery_charge(distance):
+    """Calculate the delivery charge based on the distance."""
+    if distance <= 5:
+        return 50  # Fixed rate for distances up to 5 km
+    elif distance <= 20:
+        return 75  # Fixed rate for distances between 5 km and 20 km
+    else:
+        return round(125 + (distance - 20) * 10, 2)  # Round to two decimal places
 
 @app.route('/update_cart/<int:item_id>', methods=['POST'])
 def update_cart(item_id):
@@ -630,15 +1023,27 @@ def update_cart(item_id):
             (CartItem.user_id == user_id) | (CartItem.session_id == session_id)
         ).first()
 
-        if cart_item:
-            # Update quantity and total price
-            cart_item.quantity = new_quantity
-            cart_item.total = cart_item.price * new_quantity
-
-            db.session.commit()
-            flash('Cart updated successfully!', 'success')
-        else:
+        if not cart_item:
             flash('Cart item not found.', 'danger')
+            return redirect(url_for('cart'))
+
+        # Retrieve the product's stock from the Product table
+        product = Product.query.get(cart_item.product_id)
+        if not product:
+            flash('Product not found.', 'danger')
+            return redirect(url_for('cart'))
+
+        # Validate new quantity against available stock
+        if new_quantity > product.stock:
+            flash(f'Only {product.stock} units available in stock.', 'warning')
+            return redirect(url_for('cart'))
+
+        # Update quantity and total price
+        cart_item.quantity = new_quantity
+        cart_item.total = cart_item.price * new_quantity
+
+        db.session.commit()
+        flash('Cart updated successfully!', 'success')
 
     except ValueError:
         flash('Invalid quantity. Please enter a valid number.', 'danger')
@@ -665,50 +1070,120 @@ def orders():
 
     return render_template('orders.html', orders=orders, user=user, cart_count=cart_count)
 
-@app.route('/generate_invoice/<order_number>')
-def generate_invoice(order_number):
-    # Retrieve the order using order_number instead of order_id
-    order = Order.query.filter_by(order_number=order_number).first_or_404()
-    order_items = OrderItem.query.filter_by(order_id=order.id).all()
+ALLOWED_EXTENSIONS = {'xlsx', 'csv', 'xls'}
 
-    # Create an in-memory PDF using BytesIO
-    pdf_stream = BytesIO()
-    c = canvas.Canvas(pdf_stream, pagesize=letter)
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-    # Add content to the PDF (Header)
-    c.setFont("Helvetica-Bold", 16)
-    c.drawString(100, 750, f"Invoice for Order #{order.order_number}")  # Use order_number for clarity
+@app.route('/upload_products', methods=['GET', 'POST'])
+def upload_products():
+    if request.method == 'POST':
+        # Check if a file is submitted
+        file = request.files.get('excel_file')
+        if not file or not allowed_file(file.filename):
+            flash('Please upload a valid Excel file (.xlsx)', 'error')
+            return redirect(request.url)
 
-    # Add Order Items to the PDF
-    c.setFont("Helvetica", 12)
-    y_position = 700  # Y-position to start listing items
-    for item in order_items:
-        c.drawString(100, y_position, f"{item.product_name} - {item.quantity} x ₹{item.price} = ₹{item.total}")
-        y_position -= 20  # Move down for the next item
+        # Secure the filename and save it
+        filename = secure_filename(file.filename)
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(filepath)
 
-    # Add Total Amount
-    c.setFont("Helvetica-Bold", 14)
-    c.drawString(100, y_position - 20, f"Total: ₹{order.total_amount}")
+        try:
+            # Read the Excel file using pandas
+            df = pd.read_excel(filepath)
 
-    # Finalize the PDF
-    c.showPage()
-    c.save()
-    pdf_stream.seek(0)  # Reset stream pointer to the beginning
+            # Loop through the DataFrame and insert into the database
+            for _, row in df.iterrows():
+                product = Product(
+                    name=row['name'],
+                    description=row['description'],
+                    price=row['price'],
+                    category=row['category'],
+                    company=row['company'],
+                    stock=int(row['stock']),
+                    image=row['image'],
+                    discount=row.get('discount', 0),  # Default 0 if not provided
+                    hsn_sac=row.get('hsn_sac', 0)  # Default 0 if not provided
+                )
+                db.session.add(product)
 
-    # Create Flask response for PDF download/print
-    response = make_response(pdf_stream.read())
-    response.headers['Content-Type'] = 'application/pdf'
-    response.headers['Content-Disposition'] = f'inline; filename=invoice_{order.order_number}.pdf'  # Use order_number in the filename
-    return response
+            # Commit the changes
+            db.session.commit()
+            flash('Products uploaded successfully!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error uploading products: {str(e)}', 'error')
 
-@app.route('/invoice/<order_number>')
-def invoice(order_number):
-    # Retrieve the order using order_number instead of order_id
-    order = Order.query.filter_by(order_number=order_number).first_or_404()
-    order_items = OrderItem.query.filter_by(order_id=order.id).all()
+        return redirect(url_for('upload_products'))
 
-    # Render the invoice template with the order and order items
-    return render_template('invoice.html', order=order, order_items=order_items)
+    return render_template('add_product.html')
+
+# Route to display companies based on category
+@app.route('/category/<category_name>')
+def companies_by_category(category_name):
+    # Fetch companies that match the given category_name
+    companies = CompanyDetails.query.filter_by(category=category_name).all()
+
+    # Render companies.html with the filtered companies data
+    return render_template('companies.html', category_name=category_name, companies=companies)
+
+
+
+#Route for edit profile
+@app.route('/edit_profile')
+def edit_profile():
+    user = session.get('user')
+    user_d = User.query.get(session.get('user_id'))
+    user_id=session['user_id']
+    addresses = Address.query.filter_by(user_id=user_id).all()
+    return render_with_cart('edit.html', user=user, user_d=user_d, addresses=addresses)
+
+@app.route('/save_changes', methods=['GET', 'POST'])  # Ensure only logged-in users can access this route
+def save_changes():
+    if request.method == 'POST':
+        user = session.get('user')
+        user_d = User.query.get(session.get('user_id'))
+        user_id=session['user_id']
+        addresses = Address.query.filter_by(user_id=user_id).all()
+    
+        username = request.form['username']
+        email = request.form['email']
+        phone = request.form['phone']
+
+        address_line = request.form['line']
+        city = request.form['city']
+        state = request.form['state']
+        postal_code = request.form['postal_code']
+
+
+        # Check for existing users with the same username and email
+        existing_user = User.query.filter_by(username=username).first()
+
+        # Check if the username or email is already taken
+        if existing_user:
+            flash('Username already exists. Please choose a different one.', 'error')
+            return redirect(url_for('edit_profile'))
+
+        # Update the current user's information
+
+        user_d.username = username
+        user_d.email = email
+        user_d.phone = phone  # Ensure the phone field exists in the User model
+        
+        for address in addresses:
+            address.address_line=address_line
+            address.city=city
+            address.state=state
+            address.postal_code=postal_code
+        # Commit changes to the database
+        db.session.commit()
+
+        flash('Profile updated successfully!', 'success')
+        return render_template('profile.html', user=user, user_d=user_d, addresses=addresses)
+
+    return render_template('edit.html', user=user)  # Render the edit form
+
 
 
 # Run the application

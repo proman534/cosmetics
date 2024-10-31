@@ -73,7 +73,7 @@
 
         <div class="order-details">
             <h2>Order Details</h2>
-            <p><strong>Delivery Address:</strong> {{ order.address }}</p>
+            <p><strong>Delivery Address:</strong> {{ address.address_line }}, {{ address.city }}, {{ address.state }} {{ address.postal_code }}</p>
             <p><strong>Order Date:</strong> {{ order.placed_at.strftime('%Y-%m-%d %H:%M') }}</p>
             <p><strong>Delivery Date:</strong> {{ order.delivery_date.strftime('%Y-%m-%d') }}</p>
 
@@ -102,11 +102,10 @@
                     {% endfor %}
                 </tbody>
             </table>
-
+            <p><strong>Delivery Charges:</strong> ₹{{ order.delivery_charge }}</p>
             <p><strong>Total Amount:</strong> ₹{{ order.total_amount }}</p>
         </div>
 
         <a href="{{ url_for('home') }}" class="btn btn-primary">Continue Shopping</a>
-        <a href="{{ url_for('invoice', order_number=order.order_number) }}" class="btn">View Invoice</a>
     </div>
     {% endblock %}

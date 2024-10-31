@@ -1,8 +1,90 @@
 {% extends 'base.html' %}
 
-{% block title %}My Orders{% endblock %}
-
 {% block content %}
+<style>
+    .btn-open-popup {
+        padding: 12px 24px;
+        font-size: 18px;
+        background-color: #9e0d3d;
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-open-popup:hover {
+        background-color: #cf7bc4;
+    }
+
+    .overlay-container {
+        
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        display: none; /* Start hidden */
+        align-items: center; /* Center vertically */
+        justify-content: center; /* Center horizontally */
+        z-index: 1000; /* Ensure it appears on top */
+        opacity: 0; /* Start hidden for animation */
+        transition: opacity 0.3s ease; /* Smooth transition */
+    }
+
+    .overlay-container.show {
+        display: flex; /* Show as flex when active */
+        opacity: 1; /* Fade in */
+    }
+
+    .popup-box {
+        background: white;
+        padding: 20px;
+        border-radius: 5px;
+        width: auto;
+        min-width: 300px; /* Adjust width as needed */
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); /* Optional: Add shadow for better visibility */
+    }
+
+    .btn-submit,
+    .btn-close-popup {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .btn-submit {
+        background-color: green;
+        color: #fff;
+    }
+
+    .btn-close-popup {
+        margin-top: 12px;
+        background-color: #e74c3c;
+        color: #fff;
+    }
+
+    .btn-submit:hover,
+    .btn-close-popup:hover {
+        background-color: #cf7bc4;
+    }
+
+    /* Keyframes for fadeInUp animation */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>
 <div class="orders-container">
     <h1>My Orders</h1>
 
@@ -14,9 +96,9 @@
                 <tr>
                     <th>Order Number</th>
                     <th>Placed At</th>
-                    <th>Total Amount</th>
-                    <th>Delivery Date</th>
-                    <th>Items</th>
+                    <th>Address</th>
+                    <th>Expected Delivery</th>
+                    <th>Details</th>
                 </tr>
             </thead>
             <tbody>
@@ -24,18 +106,25 @@
                 <tr>
                     <td>{{ order.order_number }}</td>
                     <td>{{ order.placed_at.strftime('%Y-%m-%d %H:%M') }}</td>
-                    <td>₹{{ order.total_amount }}</td>
+                    <td>{{order.address.address_line}} {{order.address.city}} {{order.address.state}} {{order.address.postal_code}}</td>
                     <td>{{ order.delivery_date.strftime('%Y-%m-%d') }}</td>
                     <td>
-                        {% if order.items %}
-                            <ul>
-                                {% for item in order.items %}
-                                    <li>{{ item.product_name }} - Qty: {{ item.quantity }} - ₹{{ item.total }}</li>
-                                {% endfor %}
-                            </ul>
-                        {% else %}
-                            <p>No items found for this order.</p>
-                        {% endif %}
+                        <button class="btn-open-popup" 
+                                onclick='togglePopup({
+                                    
+                                    "order_items": [
+                                        {% for item in order.order_items %}
+                                        {
+                                            "product_name": "{{ item.product_name }}",
+                                            "quantity": {{ item.quantity }},
+                                            "total": {{ item.total }},
+                                            "image": "{{ url_for('static', filename='images/' + item.product_image) }}"
+                                        }{% if not loop.last %},{% endif %}
+                                        {% endfor %}
+                                    ] || []
+                                })'>
+                            Get details
+                        </button>
                     </td>
                 </tr>
                 {% endfor %}
@@ -44,9 +133,44 @@
     {% else %}
         <p>No orders found.</p>
     {% endif %}
-
+    <div id="popupOverlay" class="overlay-container">
+        <div class="popup-box">
+            
+            <div id="productDetails" style="display: flex;"></div><br>
+            <p id="amount"></p>
+            <button class="btn-close-popup" onclick="togglePopup()">
+                Close
+            </button>
+        </div>
+    </div>
     <div class="text-center">
         <a href="{{ url_for('home') }}" class="button">Back to Home</a>
     </div>
+    <script>
+        function togglePopup(order) {
+            const overlay = document.getElementById('popupOverlay');
+            
+            const productDetailsElement = document.getElementById('productDetails');
+    
+            if (order) {
+                // Opening the popup
+                
+                
+                productDetailsElement.innerHTML = order.order_items.map(item => `
+                    <div class="product-details" style="padding: 10px">
+                        <p>${item.product_name}</p>
+                        <img src="${item.image}" alt="${item.product_name}" style="width: 100px; height: 100px; border-radius: 5px;">
+                        <p>Quantity: ${item.quantity}</p>
+                        <p>Price: ₹${item.total}</p>
+                        
+                    </div>
+                `).join('');
+                overlay.classList.add("show"); // Show the popup with fade-in effect
+            } else {
+                // Closing the popup
+                overlay.classList.remove("show"); // Hide the popup
+            }
+        }
+    </script>
 </div>
 {% endblock %}

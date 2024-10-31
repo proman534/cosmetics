@@ -1,7 +1,5 @@
 {% extends 'base.html' %}
 
-{% block title %}Cosmetics Website - Cart{% endblock %}
-
 {% block content %}
     <style>
         /* Neumorphic Cart Styles */
@@ -156,7 +154,7 @@
                                 <td>₹{{ item.price }}</td>
                                 <td>
                                     <form action="{{ url_for('update_cart', item_id=item.id) }}" method="POST">
-                                        <input type="number" name="quantity" value="{{ item.quantity }}" min="1" required>
+                                        <input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ item.stock }}"required>
                                         <button type="submit" class="update-btn">Update</button>
                                     </form>                                  
                                 </td>

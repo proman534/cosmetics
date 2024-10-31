@@ -6,6 +6,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Admin - Cosmetics Website{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <style>
+        #popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            
+            display: none; /* Start hidden */
+            align-items: flex-start; /* Center vertically */
+            justify-content: center; /* Center horizontally */
+            /* z-index: 1000; Ensure it appears on top */
+            opacity: 0; /* Start hidden for animation */
+            transition: opacity 0.3s ease; /* Smooth transition */
+            display: flex; /* Show as flex when active */
+            opacity: 1;
+        }
+        .popup-box {
+            background: white;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+            width: 300px; /* Adjust width as needed */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); /* Optional: Add shadow for better visibility */
+        }
+        .btn-close-popup {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            margin-top: 12px;
+            background-color: #e74c3c;
+            color: #fff;
+        }
+    </style>
 </head>
 <body>
 
@@ -17,13 +54,14 @@
         <nav>
             <ul>
                 <li><a href="{{ url_for('add_product') }}">Add Product</a></li>
+                <li><a href="{{ url_for('add_company') }}">Manage Companies</a></li>
                 <li><a href="{{ url_for('admin_orders') }}">Orders</a></li>
                 <li><a href="{{ url_for('admin') }}">Hello Admin!</a></li>
                 <li><a href="{{ url_for('logout') }}">Logout</a></li>
             </ul>
         </nav>        
     </header>
-
+    <div id="flash-messages" data-messages="{{ get_flashed_messages(with_categories=True) | tojson }}"></div>
     <!-- Main Content Section -->
     <main>
         {% block content %}{% endblock %}
@@ -33,6 +71,23 @@
     <footer>
         <p>© 2024 Cosmetics Website | Terms | Privacy | Contact</p>
     </footer>
-
+    {% with messages=get_flashed_messages() %}
+    {% if messages %}
+    <div id="popup-overlay">
+        <div class="popup-box">
+            <p id="flash-message"></p>
+            <button class="btn-close-popup" onclick="closePopup()">close</button>
+        </div>
+    </div>
+    <script>
+        const flashMessage="{{ messages[0] }}";
+        // document.getElementById('popup-overlay').style.display='flex';
+        document.getElementById('flash-message').textContent=flashMessage;
+        function closePopup(){
+            document.getElementById('popup-overlay').style.display='none';
+        }
+    </script>
+    {% endif %}
+    {% endwith %}
 </body>
 </html>
