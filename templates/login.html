@@ -36,11 +36,27 @@
             color: #333; /* Customize text color */
             margin-right: 150px;
         }
+        .popup {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #db7093; /* Background color */
+            color: white; /* Text color */
+            padding: 15px;
+            border-radius: 5px;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+        }
+        .popup.show {
+            display: block;
+            opacity: 1;
+        }
     </style>
 </head>
 
 <body>
-
+    <div id="popup" class="popup"></div>
     <div class="wrapper">
         <span class="rotate-bg"></span>
 
@@ -100,6 +116,25 @@
                     showFlashMessage(message);
                 });
             };
+        
+        window.onload = function() {
+            // Get flash messages from the server
+            const messages = {{ get_flashed_messages(with_categories=True) | tojson | safe }};
+            const popup = document.getElementById('popup');
+        
+            if (messages.length > 0) {
+                messages.forEach(function([category, message]) {
+                    popup.textContent = message;
+                    popup.classList.add('show');
+            
+                    // Hide the pop-up after 3 seconds
+                    setTimeout(function() {
+                        popup.classList.remove('show');
+                    }, 3000);
+                });
+            }
+        };
+            
         
     </script>
 </body>

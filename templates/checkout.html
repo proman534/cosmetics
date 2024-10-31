@@ -117,10 +117,7 @@
             <h2>Items Total: ₹{{ '%.2f' | format(total_amount) }}</h2>
 
             <!-- Display delivery charges -->
-            <h2>Delivery Charges: ₹{{ '%.2f' | format(delivery_charge) }}</h2>
-
-            <!-- Calculate and display grand total -->
-            <h2>Grand Total: ₹{{ '%.2f' | format(total_amount + delivery_charge) }}</h2>
+            <h2>Delivery Charges are Applicable</h2>
 
             <!-- Place order form -->
             <form action="{{ url_for('place_order') }}" method="POST">

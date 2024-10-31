@@ -81,20 +81,21 @@
             flex: 1;
         }
 
-        /* Styles for flash messages */
-        .flash-message {
+        .popup {
+            display: none;
             position: fixed;
             top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #f8d7da;
-            color: #721c24;
-            padding: 10px 20px;
-            border: 1px solid #f5c6cb;
+            right: 20px;
+            background-color: #db7093; /* Background color */
+            color: white; /* Text color */
+            padding: 15px;
             border-radius: 5px;
-            display: none;
             z-index: 1000;
-            transition: opacity 0.5s ease-in-out;
+            transition: opacity 0.5s ease;
+        }
+        .popup.show {
+            display: block;
+            opacity: 1;
         }
     </style>
 </head>
@@ -105,7 +106,7 @@
         <span class="rotate-bg2"></span>
 
         <!-- Flash Message Container -->
-        <div id="flash-messages" data-messages="{{ get_flashed_messages(with_categories=True) | tojson }}"></div>
+        <div id="popup" class="popup"></div>
 
         <div class="form-box register">
             <div class="logo">
@@ -243,23 +244,22 @@
             this.classList.toggle('bx-show');
             this.classList.toggle('bx-hide');
         });
-        // Function to show flash messages
-        function showFlashMessage(message) {
-            const flashMessageDiv = document.getElementById('flashMessage');
-            flashMessageDiv.innerText = message;
-            flashMessageDiv.style.display = 'block';
-
-            setTimeout(() => {
-                flashMessageDiv.style.display = 'none';
-            }, 3000); // Hide after 3 seconds
-        }
-
-        // Example usage (you may want to call this function from Flask)
         window.onload = function() {
-            const messages = JSON.parse(document.getElementById('flash-messages').dataset.messages);
-            messages.forEach(([category, message]) => {
-                showFlashMessage(message);
-            });
+            // Get flash messages from the server
+            const messages = {{ get_flashed_messages(with_categories=True) | tojson | safe }};
+            const popup = document.getElementById('popup');
+        
+            if (messages.length > 0) {
+                messages.forEach(function([category, message]) {
+                    popup.textContent = message;
+                    popup.classList.add('show');
+        
+                    // Hide the pop-up after 3 seconds
+                    setTimeout(function() {
+                        popup.classList.remove('show');
+                    }, 3000);
+                });
+            }
         };
     </script>
 </body>
