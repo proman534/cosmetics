@@ -26,6 +26,7 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/images'
+app.config['SQLALCHEMY_DATABASE_URI'] = "mysql+pymysql://root:root@localhost/cosmetics"
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -430,7 +431,7 @@ def cart():
         }
         for item in cart_items
     ]
-        flash('Items are in cart!','success')
+        # flash('Items are in cart!','success')
     else:
         # Retrieve cart items for guest user
         cart_items = CartItem.query.filter_by(session_id=session_id).all()
@@ -486,10 +487,10 @@ def login():
 
             # Admin user redirection
             if user.user_type == 'admin':
-                flash('Admin login successful!', 'success')
+                # flash('Admin login successful!', 'success')
                 return redirect(url_for('admin'))
 
-            flash('Login successful!', 'success')
+            # flash('Login successful!', 'success')
             return redirect(url_for('home'))  # Redirect regular user to home page
 
         flash('Invalid credentials', 'danger')  # Handle login failure
@@ -613,7 +614,7 @@ def signup():
 def logout():
     session.pop('user', None)
     session.pop('user_id', None)  # Remove user_id from session
-    flash('You have successfully logged out.', 'info')
+    # flash('You have successfully logged out.', 'info')
     return redirect(url_for('home'))
 
 # Route for Contact
@@ -747,7 +748,7 @@ def place_order():
         db.session.commit()  # Save changes to the database
         clear_cart()  # Clear the cart
 
-        flash('Order placed successfully!', 'success')
+        # flash('Order placed successfully!', 'success')
         return redirect(url_for('order_confirmation'))  # Redirect to confirmation page
 
     except IntegrityError:
