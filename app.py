@@ -6,9 +6,6 @@ from flask_migrate import Migrate
 from werkzeug.utils import secure_filename  
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
-from math import radians, sin, cos, sqrt, atan2
-from opencage.geocoder import OpenCageGeocode
-import requests
 import pandas as pd
 import os
 import random
