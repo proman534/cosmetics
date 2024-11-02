@@ -2,7 +2,7 @@
 
 :root {
     --white: #fff;
-    --black: #db7093; 
+    --black: #373e50; 
     --lightBulue: #17a;
 }
 
@@ -30,19 +30,18 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    background-image: url("./images/bg.jpeg");
+    background-image: url("./images/bg1.jpg");
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    opacity: 0.5; /* Adjust opacity here (0 to 1) */
     z-index: -1; /* Ensure it stays behind the content */
 }
 
 
 .wrapper {
     position: relative;
-    width: 950px;
-    height: 650px;
+    width: 1000px;
+    height: 700px;
     background: var(--white);
     border: 2px solid var(--black);
     border-radius: 10px;
@@ -203,13 +202,98 @@ form .linkTxt {
 
 .wrapper .rotate-bg {
     position: absolute;
-    top: -4px;
     left:  0;
     width: 800px;
-    height: 700px;
-    background: #db7093;
+    height: 750px;
+    background: #373e50;
     transform: rotate(0deg) skewY(-50deg);
     transform-origin: top left;
     transition: none; /* Removed transition */
 }
 
+/* Additional styling to position logo and title side by side */
+.logo-title-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+}
+
+.logo img {
+    height: 70px;
+    margin-left: 55px;
+    margin-top: 0%;
+}
+
+.title {
+    font-size: 24px;
+    color: #333;
+}
+
+/* Hide the second form section initially */
+.form-section {
+    display: none;
+}
+
+/* Show the form section that is currently active */
+.form-section.active {
+    display: block;
+}
+
+.button-container {
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Custom styles for alternate phone field */
+#alt-phone {
+    border-color: pink;
+}
+
+#alt-phone:focus {
+    border-color: blue;
+}
+
+/* Adjusting the form-box height and making the form content scrollable */
+.form-box {
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+/* Reducing the gap between fields */
+.input-box {
+    margin-bottom: 10px;
+}
+
+/* Two-column layout for some fields */
+.two-column {
+    display: flex;
+    gap: 15px;
+}
+
+.two-column .input-box {
+    flex: 1;
+}
+
+.popup {
+    display: none;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #373e50; /* Background color */
+    color: white; /* Text color */
+    padding: 15px;
+    border-radius: 5px;
+    z-index: 1000;
+    transition: opacity 0.5s ease;
+}
+.popup.show {
+    display: block;
+    opacity: 1;
+}

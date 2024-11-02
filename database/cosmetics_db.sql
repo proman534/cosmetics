@@ -35,7 +35,7 @@ CREATE TABLE `addresses` (
   PRIMARY KEY (`id`),
   KEY `fk_user_address_id` (`user_id`),
   CONSTRAINT `fk_user_address_id` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -47,29 +47,6 @@ LOCK TABLES `addresses` WRITE;
 INSERT INTO `addresses` VALUES (1,14,'hmt hills','hyderabad','telangana','500072','India','secondary','2024-10-23 10:03:09'),(2,8,'hmt hills','hyderabad','telangana','500072','India','secondary','2024-10-23 23:01:21'),(3,3,'kphb','hyderabad','telangana','500072','India','secondary','2024-10-24 04:52:06'),(4,16,'Pragathi nagar','Hyderabad','Telangana','500043','India','default','2024-10-26 02:10:13'),(5,17,'line ','hyderabad','telangana','500043','India','default','2024-10-26 10:52:22'),(6,3,'Miyapur Cross Roads','hyderabad','telangana','500049','India','secondary','2024-10-27 07:41:39'),(7,3,'Miyapur Cross Roads','hyderabad','telangana','500049','India','secondary','2024-10-27 07:42:06'),(8,3,'Miyapur Cross Roads','hyderabad','telangana','500049','India','secondary','2024-10-27 07:44:07'),(9,3,'Miyapur Cross Roads','hyderabad','telangana','500049','India','secondary','2024-10-27 07:47:33'),(10,3,'Miyapur Cross Roads','hyderabad','telangana','500049','India','secondary','2024-10-27 07:48:55'),(11,3,'Miyapur Cross Roads','hyderabad','telangana','500049','India','secondary','2024-10-27 07:55:38'),(12,3,'Miyapur Cross Roads','hyderabad','telangana','500049','India','secondary','2024-10-27 07:55:51'),(13,3,'Miyapur Cross Roads','hyderabad','telangana','500049','India','secondary','2024-10-27 08:10:11'),(14,3,'Miyapur Cross Roads','hyderabad','telangana','500049','India','secondary','2024-10-27 08:17:00'),(15,3,'Miyapur Cross Roads','hyderabad','telangana','500049','India','secondary','2024-10-27 08:18:19'),(16,3,'Miyapur Cross Roads','hyderabad','telangana','500049','India','secondary','2024-10-27 08:20:46'),(17,3,'Miyapur Cross Roads','hyderabad','telangana','500049','India','secondary','2024-10-27 08:21:53'),(18,3,'Miyapur Cross Roads','hyderabad','telangana','500049','India','secondary','2024-10-27 08:22:09'),(19,3,'Miyapur Cross Roads','hyderabad','telangana','500049','India','secondary','2024-10-27 08:28:08'),(20,3,'Miyapur Cross Roads','hyderabad','telangana','500049','India','secondary','2024-10-27 08:34:41'),(21,3,'Miyapur Cross Roads','hyderabad','telangana','500049','India','secondary','2024-10-27 08:36:44'),(22,13,'Miyapur Cross Roads','hyderabad','telangana','500049','India','secondary','2024-10-27 10:10:10');
 /*!40000 ALTER TABLE `addresses` ENABLE KEYS */;
 UNLOCK TABLES;
-
---
--- Table structure for table `alembic_version`
---
-
-DROP TABLE IF EXISTS `alembic_version`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `alembic_version` (
-  `version_num` varchar(32) NOT NULL,
-  PRIMARY KEY (`version_num`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `alembic_version`
---
-
-LOCK TABLES `alembic_version` WRITE;
-/*!40000 ALTER TABLE `alembic_version` DISABLE KEYS */;
-/*!40000 ALTER TABLE `alembic_version` ENABLE KEYS */;
-UNLOCK TABLES;
-
 --
 -- Table structure for table `cart_item`
 --
@@ -92,7 +69,7 @@ CREATE TABLE `cart_item` (
   KEY `fk_user` (`user_id`),
   CONSTRAINT `fk_product` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=125 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=164 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -117,7 +94,7 @@ CREATE TABLE `company_details` (
   `category` varchar(100) DEFAULT NULL,
   `image` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -144,7 +121,7 @@ CREATE TABLE `contact` (
   `message` text NOT NULL,
   `timestamp` datetime DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -179,7 +156,7 @@ CREATE TABLE `order_item` (
   KEY `product_id` (`product_id`),
   CONSTRAINT `order_item_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE,
   CONSTRAINT `order_item_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `product` (`id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=73 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=85 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -188,7 +165,7 @@ CREATE TABLE `order_item` (
 
 LOCK TABLES `order_item` WRITE;
 /*!40000 ALTER TABLE `order_item` DISABLE KEYS */;
-INSERT INTO `order_item` VALUES (68,76,6,'shampoo','shampoo.jpg',1,763.3,763.3,'2024-10-27 16:11:17'),(69,77,5,'Compact Powder','powder.jpg',2,135,270,'2024-10-27 16:17:46'),(70,78,9,'soap','soap.jpeg',1,150.45,150.45,'2024-10-27 16:19:29'),(71,79,9,'soap','soap.jpeg',5,150.45,752.25,'2024-10-28 04:41:37'),(72,79,5,'Compact Powder','powder.jpg',1,135,135,'2024-10-28 04:41:37');
+INSERT INTO `order_item` VALUES (75,84,6,'shampoo','shampoo.jpg',1,763.3,763.3,'2024-10-30 05:10:11'),(76,85,4,'dove soap','dove_soap.jpeg',2,5081.44,10162.9,'2024-10-30 08:58:20'),(77,85,10,'something','bg.jpeg',1,0,0,'2024-10-30 08:58:20'),(78,86,5,'Compact Powder','powder.jpg',1,135,135,'2024-10-30 09:19:03'),(79,86,6,'shampoo','shampoo.jpg',1,763.3,763.3,'2024-10-30 09:19:03'),(80,86,9,'soap','soap.jpeg',1,150.45,150.45,'2024-10-30 09:19:03'),(81,87,5,'Compact Powder','powder.jpg',1,135,135,'2024-10-31 13:10:35'),(82,88,6,'shampoo','shampoo.jpg',1,763.3,763.3,'2024-10-31 16:11:36'),(83,89,6,'shampoo','shampoo.jpg',1,763.3,763.3,'2024-11-01 06:53:38'),(84,90,5,'Compact Powder','powder.jpg',1,135,135,'2024-11-01 16:55:46');
 /*!40000 ALTER TABLE `order_item` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -207,14 +184,13 @@ CREATE TABLE `orders` (
   `delivery_date` datetime NOT NULL,
   `placed_at` datetime NOT NULL,
   `address_id` int DEFAULT NULL,
-  `delivery_charge` float DEFAULT '50',
   PRIMARY KEY (`id`),
   UNIQUE KEY `order_number` (`order_number`),
   KEY `fk_address_id` (`address_id`),
   KEY `fk_user_id` (`user_id`),
   CONSTRAINT `fk_address_id` FOREIGN KEY (`address_id`) REFERENCES `addresses` (`id`),
   CONSTRAINT `fk_user_id` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=80 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=91 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -223,7 +199,7 @@ CREATE TABLE `orders` (
 
 LOCK TABLES `orders` WRITE;
 /*!40000 ALTER TABLE `orders` DISABLE KEYS */;
-INSERT INTO `orders` VALUES (76,'XPWYWE6S',17,913.3,'2024-11-01 21:41:17','2024-10-27 16:11:17',5,75),(77,'VGIJBOPH',17,75,'2024-11-01 21:47:46','2024-10-27 16:17:46',5,75),(78,'F0TZUF7O',17,225.45,'2024-11-01 21:49:30','2024-10-27 16:19:30',5,75),(79,'EL6OE7BI',3,962.25,'2024-11-02 10:11:37','2024-10-28 04:41:37',3,75);
+INSERT INTO `orders` VALUES (84,'594198IE',3,763.3,'2024-11-04 10:40:12','2024-10-30 05:10:12',3),(85,'TJJMYN0Y',17,10162.9,'2024-11-04 14:28:21','2024-10-30 08:58:21',5),(86,'R0X7E1XD',17,1048.75,'2024-11-04 14:49:04','2024-10-30 09:19:04',5),(87,'417KTXCR',17,135,'2024-11-05 18:40:36','2024-10-31 13:10:36',5),(88,'B1TBJ94H',3,763.3,'2024-11-05 21:41:37','2024-10-31 16:11:37',19),(89,'XBA803FV',3,763.3,'2024-11-06 12:23:39','2024-11-01 06:53:39',6),(90,'NHD7EB6P',3,135,'2024-11-06 22:25:46','2024-11-01 16:55:46',11);
 /*!40000 ALTER TABLE `orders` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -246,7 +222,7 @@ CREATE TABLE `product` (
   `hsn_sac` int NOT NULL,
   `image` varchar(200) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -255,7 +231,7 @@ CREATE TABLE `product` (
 
 LOCK TABLES `product` WRITE;
 /*!40000 ALTER TABLE `product` DISABLE KEYS */;
-INSERT INTO `product` VALUES (4,'dove soap','Shop for Dove Shea Butter Beauty Cream Moisturizing Bar Soap with Vanilla Scent online at Ubuy. Get the best deals and offers on Ubuy, a India.',5584,9,'bodycare','',19,1594,'dove_soap.jpeg'),(5,'Compact Powder','Makeup Powder',150,10,'Makeup','Lakme',0,8756,'powder.jpg'),(6,'shampoo','tresme shapoo for smooth hair',898,15,'Haircare','Matrix',11,5678,'shampoo.jpg'),(8,'cream','a cream applied to face',1225,8,'Makeup','Lakme',20,1234,'face-cream.jpeg'),(9,'soap','Be 100% sure to protect your skin from 100 illness-causing germs and bacteria. Dettol\'s Intense Cool Protection bathing soap bar keeps your skin.',177,15,'Bodycare','Santoor',13,9101,'soap.jpeg'),(10,'something','Something is so special because it is special',0,0,'Tools','Vega',0,12555,'bg.jpeg');
+INSERT INTO `product` VALUES (4,'dove soap','Shop for Dove Shea Butter Beauty Cream Moisturizing Bar Soap with Vanilla Scent online at Ubuy. Get the best deals and offers on Ubuy, a India.',5584,9,'Bodycare','Santoor',47,1594,'dove_soap.jpeg'),(5,'Compact Powder','Makeup Powder',150,10,'Makeup','Lakme',22,8756,'powder.jpg'),(6,'shampoo','tresme shapoo for smooth hair',898,15,'Haircare','Matrix',32,5678,'shampoo.jpg'),(8,'cream','a cream applied to face',1225,8,'Makeup','Lakme',47,1234,'face-cream.jpeg'),(9,'soap','Be 100% sure to protect your skin from 100 illness-causing germs and bacteria. Dettol\'s Intense Cool Protection bathing soap bar keeps your skin.',177,15,'Bodycare','Santoor',46,9101,'soap.jpeg'),(10,'something','Something is so special because it is special',0,0,'Tools','Vega',46,12555,'bg.jpeg');
 /*!40000 ALTER TABLE `product` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -266,6 +242,7 @@ UNLOCK TABLES;
 DROP TABLE IF EXISTS `user`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
+
 CREATE TABLE `user` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `username` varchar(150) NOT NULL,
@@ -280,7 +257,7 @@ CREATE TABLE `user` (
   UNIQUE KEY `username` (`username`),
   UNIQUE KEY `email` (`email`),
   UNIQUE KEY `username_2` (`username`)
-) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -302,4 +279,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2024-10-28 12:05:13
+-- Dump completed on 2024-11-02 13:37:26

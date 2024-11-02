@@ -49,8 +49,7 @@ class User(db.Model):
     phone = db.Column(db.String(15), nullable=False)
     gender = db.Column(db.String(10))  # New gender column
     user_type = db.Column(db.String(10), default='user')
-    latitude = db.Column(db.Float, nullable=True)  # Add this line
-    longitude = db.Column(db.Float, nullable=True)
+
 
     orders = db.relationship('Order', back_populates='user', lazy=True)
     addresses = db.relationship('Address', backref='user', lazy=True)

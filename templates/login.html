@@ -14,12 +14,7 @@
 
     <style>
         /* Additional styling to position logo and title side by side */
-        .logo-title-container {
-            display: flex;
-            align-items: center;
-            justify-content: space-between; /* Optional: adjust spacing as needed */
-            margin-bottom: 20px; /* Space between logo/title and the form */
-        }
+        
 
         .logo {
             display: flex;
@@ -28,20 +23,20 @@
 
         .logo img {
             height: 60px;
-            margin-right: 10px; /* Space between logo and title */
+            margin-left: 60px; /* Space between logo and title */
         }
 
         .title {
             font-size: 24px; /* Adjust as needed */
             color: #333; /* Customize text color */
-            margin-right: 150px;
+            
         }
         .popup {
             display: none;
             position: fixed;
             top: 20px;
             right: 20px;
-            background-color: #db7093; /* Background color */
+            background-color: #373e50; /* Background color */
             color: white; /* Text color */
             padding: 15px;
             border-radius: 5px;
@@ -65,7 +60,7 @@
         <div class="form-box login">
             <div class="logo-title-container">
                 <div class="logo">
-                    <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Cosmetics Logo">
+                    <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="Cosmetics Logo">
                 </div>
                 <h2 class="title animation" style="--i:0; --j:21">Login</h2>
             </div>

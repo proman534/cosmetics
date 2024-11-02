@@ -12,7 +12,7 @@
             position: fixed;
             bottom: 20px;
             right: 20px;
-            background-color: #db7093;
+            background-color: #373e50;
             color: white;
             border: none;
             border-radius: 50px;
@@ -27,12 +27,12 @@
         }
 
         .floating-cart:hover {
-            background-color: #c06083;
+            background-color: #373e50;
         }
 
         .cart-counter {
             background-color: white;
-            color: #db7093;
+            color: #373e50;
             border-radius: 50%;
             width: 25px;
             height: 25px;
@@ -48,14 +48,19 @@
         .popup {
             display: none;
             position: fixed;
-            top: 70px;
-            right: 5px;
-            background-color: #db7093; /* Background color */
+            top: 5px;
+            right: 41%;
+            background-color: #373e50; /* Background color */
             color: white; /* Text color */
-            padding: 15px;
-            border-radius: 25px;
+            padding-top: 15px;
+            padding-right: 75px;
+            padding-left: 75px;
+            padding-bottom: 15px;
+            border-radius: 5px;
+            border-radius: 5px;
             z-index: 1000;
             transition: opacity 0.5s ease;
+            font-size: larger;
         }
         .popup.show {
             display: block;
@@ -68,7 +73,7 @@
     <!-- Header Section -->
     <header>
         <div class="logo">
-            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Cosmetics Logo" style="height: 30px;">
+            <img src="{{ url_for('static', filename='images/logo.jpg') }}" alt="Cosmetics Logo" style="height: 50px;">
         </div>
         <nav>
             <ul>
